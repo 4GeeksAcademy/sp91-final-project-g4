@@ -188,13 +188,7 @@ class Orders(db.Model):
     order_user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('order_user_to', lazy='select'))
     vehicle_id = db.Column(db.Integer(), db.ForeignKey('vehicles.id'))
     vehicle_to = db.relationship('Vehicles', foreign_keys=[vehicle_id], backref=db.backref('vehicle_to', lazy='select'))
-    origin_id = db.Column(db.Integer(), db.ForeignKey('locations.id'))
-    origin_to = db.relationship('Locations', foreign_keys=[origin_id], backref=db.backref('origin_to', lazy='select'))
-    destiny_id = db.Column(db.Integer(), db.ForeignKey('locations.id'))
-    destiny_to = db.relationship('Locations', foreign_keys=[destiny_id], backref=db.backref('destiny_to', lazy='select'))
-
-
-    
+  
     def __repr__(self):
         return f'<User: {self.id} - {self.user_id}>' 
 
