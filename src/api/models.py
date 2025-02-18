@@ -53,7 +53,6 @@ class Comments(db.Model):
     order_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
     order_to = db.relationship('Orders', foreign_keys=[order_id], backref=db.backref('comment_to', lazy='select'))
 
-    
     def __repr__(self):
             return f'<Comment: {self.id} - {self.comment}>'
     
@@ -74,9 +73,8 @@ class Customers(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), unique=True)
     user_customer_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_customer_to', lazy='select'))
     
-
     def __repr__(self):
-        return f'<User: {self.id} - {self.email}>'
+        return f'<User: {self.id} - {self.contact_name}>'
 
     def serialize(self):
         return {"id": self.id,
@@ -118,7 +116,7 @@ class Providers(db.Model):
     
 
     def __repr__(self):
-        return f'<User: {self.id} - {self.email}>'
+        return f'<User: {self.id} - {self.contact_name}>'
 
     def serialize(self):
         return {"id": self.id,
@@ -147,7 +145,6 @@ class Locations(db.Model):
                 "city": self.city}
 
 
-
 class Orders(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     distance_km = db.Column(db.Float(), unique=False, nullable=False)
@@ -156,16 +153,16 @@ class Orders(db.Model):
     corrector_cost = db.Column(db.Float(), unique=False, nullable=False)
     final_cost = db.Column(db.Float(), unique=True, nullable=False)
     total_customer_price = db.Column(db.Float(), unique=False, nullable=False)
-    # TODO Reescribir estados => DONE
     status_order = db.Column(db.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), unique=False, nullable=False)
-    # TODO Poner 5 fechas, una por cada estado => DONE
     order_created_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     order_acepted_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     in_transit_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     delivered_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     cancel_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
-    order_user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('order_user_to', lazy='select'))
+    customer_id = db.Column(db.Integer(), db.ForeignKey('customers.id'))
+    customer_to = db.relationship('Customers', foreign_keys=[customer_id], backref=db.backref('customer_order_to', lazy='select'))
+    provider_id = db.Column(db.Integer(), db.ForeignKey('providers.id'))
+    provider_to = db.relationship('Providers', foreign_keys=[provider_id], backref=db.backref('provider_order_to', lazy='select'))
     vehicle_id = db.Column(db.Integer(), db.ForeignKey('vehicles.id'))
     vehicle_to = db.relationship('Vehicles', foreign_keys=[vehicle_id], backref=db.backref('vehicle_to', lazy='select'))
     destiny_id = db.Column(db.Integer(), db.ForeignKey('locations.id'))
@@ -180,18 +177,20 @@ class Orders(db.Model):
         return {"id": self.id,
                 "distance_km": self.distance_km,
                 "estimated_date_end": self.estimated_date_end,
-                "base_cost": self.base_price,
-                "order_created_date": self.init_date,
-                "order_acepted_date": self.init_date,
-                "in_transit_date": self.init_date,
-                "delivered_date": self.init_date,
-                "cancel_date": self.init_date,
-                "corrector_cost": self.corrector,
-                "final_cost": self.final_price,
-                "created_date": self.created_date,
+                "base_cost": self.base_cost,
+                "corrector_cost": self.corrector_cost,
+                "final_cost": self.final_cost,
+                "total_customer_price": self.total_customer_price,
+                "status_order": self.status_order,
+                "order_created_date": self.order_created_date,
+                "order_acepted_date": self.order_acepted_date,
+                "in_transit_date": self.in_transit_date,
+                "delivered_date": self.delivered_date,
+                "cancel_date": self.cancel_date,
                 "user_id": self.user_id,
+                "customer_id": self.customer_id,
+                "provider_id": self.provider_id,
                 "vehicle_id": self.vehicle_id,
                 "origin_id": self.origin_id,
-                "destiny_id": self.destiny_id,
-                "total_customer_price": self.total_customer_price}
+                "destiny_id": self.destiny_id}
     
