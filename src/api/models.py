@@ -24,7 +24,7 @@ class Users(db.Model):
                 "last_name": self.last_name,
                 "email": self.email,
                 "phone": self.phone}
-    
+
 
 class Vehicles(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -49,9 +49,9 @@ class Comments(db.Model):
     comment = db.Column(db.String(), unique=False, nullable=True)
     date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
-    user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_to', lazy='select'))
+    user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('comment_to', lazy='select'))
     order_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
-    order_to = db.relationship('Orders', foreign_keys=[order_id], backref=db.backref('order_to', lazy='select'))
+    order_to = db.relationship('Orders', foreign_keys=[order_id], backref=db.backref('comment_to', lazy='select'))
 
     
     def __repr__(self):
@@ -67,12 +67,11 @@ class Comments(db.Model):
 
 class Customers(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    company_name = db.Column(db.String(), unique=True, nullable=False)
+    company_name = db.Column(db.String(), unique=False, nullable=False)
     contact_name = db.Column(db.String(120), unique=False, nullable=False)
     phone = db.Column(db.String(), unique=False, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
     address = db.Column(db.String(), unique=False, nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), unique=True)
     user_customer_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_customer_to', lazy='select'))
     
 
@@ -84,7 +83,6 @@ class Customers(db.Model):
                 "company_name": self.company_name,
                 "contact_name": self.contact_name,
                 "phone": self.phone,
-                "email": self.email,
                 "address": self.email,
                 "user_id": self.user_id}
     
@@ -113,10 +111,9 @@ class Providers(db.Model):
     company_name = db.Column(db.String(), unique=True, nullable=False)
     contact_name = db.Column(db.String(120), unique=False, nullable=False)
     phone = db.Column(db.String(), unique=False, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
     address = db.Column(db.String(), unique=False, nullable=False)
     tariff = db.Column(db.Float(), unique=False, nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), unique=True)
     user_providers_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_providers_to', lazy='select'))
     
 
@@ -128,7 +125,6 @@ class Providers(db.Model):
                 "company_name": self.company_name,
                 "contact_name": self.contact_name,
                 "phone": self.phone,
-                "email": self.email,
                 "address": self.email,
                 "tariff": self.tariff,
                 "user_id": self.user_id}
@@ -139,11 +135,8 @@ class Locations(db.Model):
     name = db.Column(db.String(120), unique=False, nullable=False)
     region = db.Column(db.String(120), unique=True, nullable=False)
     city = db.Column(db.String(120), unique=False, nullable=False)
-    origin_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
-    location_origin_to = db.relationship('Orders', foreign_keys=[origin_id], backref=db.backref('location_origin_to', lazy='select'))
-    destiny_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
-    location_destiny_to = db.relationship('Orders', foreign_keys=[destiny_id], backref=db.backref('location_destiny_to', lazy='select'))
-
+    # Latitud y longitud
+    
     def __repr__(self):
         return f'<User: {self.id} - {self.name}>'
 
@@ -151,43 +144,34 @@ class Locations(db.Model):
         return {"id": self.id,
                 "name": self.name,
                 "region": self.region,
-                "city": self.city,
-                "origin_id": self.origin_id,
-                "destiny_id": self.destiny_id}
-    
+                "city": self.city}
 
-class Order_history(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    status_order = db.Column(db.Enum('Pending', 'In progress', 'Init', 'End', 'Cancel', name='status_order_type'), unique=False, nullable=False)
-    change_date = db.Column(db.Date, unique=False, nullable=False, default=datetime.utcnow)
-    order_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
-    order_history_to = db.relationship('Orders', foreign_keys=[order_id], backref=db.backref('order_history_to', lazy='select'))
-
-    def __repr__(self):
-        return f'<User: {self.id} - {self.email}>'
-
-    def serialize(self):
-        return {"id": self.id,
-                "status_order": self.status_order,
-                "change_date": self.change_date}
 
 
 class Orders(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     distance_km = db.Column(db.Float(), unique=False, nullable=False)
     estimated_date_end = db.Column(db.Date(), unique=False, nullable=False)
-    base_price = db.Column(db.Float(), unique=False, nullable=False)
-    corrector = db.Column(db.Float(), unique=False, nullable=False)
-    final_price = db.Column(db.Float(), unique=True, nullable=False)
-    tariff_validity = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
+    base_cost = db.Column(db.Float(), unique=False, nullable=False)
+    corrector_cost = db.Column(db.Float(), unique=False, nullable=False)
+    final_cost = db.Column(db.Float(), unique=True, nullable=False)
     total_customer_price = db.Column(db.Float(), unique=False, nullable=False)
-    created_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    init_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    end_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
+    # TODO Reescribir estados => DONE
+    status_order = db.Column(db.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), unique=False, nullable=False)
+    # TODO Poner 5 fechas, una por cada estado => DONE
+    order_created_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
+    order_acepted_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
+    in_transit_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
+    delivered_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
+    cancel_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
     order_user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('order_user_to', lazy='select'))
     vehicle_id = db.Column(db.Integer(), db.ForeignKey('vehicles.id'))
     vehicle_to = db.relationship('Vehicles', foreign_keys=[vehicle_id], backref=db.backref('vehicle_to', lazy='select'))
+    destiny_id = db.Column(db.Integer(), db.ForeignKey('locations.id'))
+    location_destiny_to = db.relationship('Locations', foreign_keys=[destiny_id], backref=db.backref('location_destiny_to', lazy='select'))
+    origin_id = db.Column(db.Integer(), db.ForeignKey('locations.id'))
+    location_origin_to = db.relationship('Locations', foreign_keys=[origin_id], backref=db.backref('location_origin_to', lazy='select'))
   
     def __repr__(self):
         return f'<User: {self.id} - {self.user_id}>' 
@@ -196,14 +180,18 @@ class Orders(db.Model):
         return {"id": self.id,
                 "distance_km": self.distance_km,
                 "estimated_date_end": self.estimated_date_end,
-                "base_price": self.base_price,
-                "init_date": self.init_date,
-                "end_date": self.end_date,
-                "corrector": self.corrector,
-                "final_price": self.final_price,
+                "base_cost": self.base_price,
+                "order_created_date": self.init_date,
+                "order_acepted_date": self.init_date,
+                "in_transit_date": self.init_date,
+                "delivered_date": self.init_date,
+                "cancel_date": self.init_date,
+                "corrector_cost": self.corrector,
+                "final_cost": self.final_price,
                 "created_date": self.created_date,
                 "user_id": self.user_id,
                 "vehicle_id": self.vehicle_id,
                 "origin_id": self.origin_id,
-                "destiny_id": self.destiny_id}
+                "destiny_id": self.destiny_id,
+                "total_customer_price": self.total_customer_price}
     
