@@ -23,7 +23,8 @@ class Users(db.Model):
                 "name": self.name,
                 "last_name": self.last_name,
                 "email": self.email,
-                "phone": self.phone}
+                "is_admin": self.is_admin,
+                "is_customer": self.is_customer}
 
 
 class Vehicles(db.Model):
