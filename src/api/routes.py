@@ -30,7 +30,7 @@ def signup():
         return jsonify({"message": "Email and password are required"}), 400
     existing_user = db.session.execute(db.select(Users).where(Users.email == email)).scalar()
     if existing_user:
-        return jsonify({"message": "El usuario ya existe"}), 409
+        return jsonify({"message": "El usuario already exist"}), 409
     new_user = Users(email=email, name=name, last_name=last_name, phone=data.get("phone", ""))
     new_user.set_password(password)  # Encripta la contraseña
     db.session.add(new_user)
@@ -52,10 +52,9 @@ def login():
     response_body['results'] = user.serialize()
     return response_body, 200
 
-
+@api.route("/protected", methods=["GET"])
 # Protect a route with jwt_required, which will kick out requests
 # without a valid JWT present.
-@api.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
     response_body = {}
@@ -141,4 +140,58 @@ def customer(id):
         db.session.delete(customer)
         db.session.commit()
         response_body['message'] = f'Customer {id} deleted successfully'
+        return response_body, 200
+    
+@api.route('/providers', methods=['GET', 'POST'])
+def providers():
+    response_body = {}
+    if request.method == 'GET':
+        rows = db.session.execute(db.select(Providers)).scalars()
+        result = [row.serialize() for row in rows]
+        response_body['message'] = "List of providers"
+        response_body['results'] = result
+        return response_body, 200
+
+    if request.method == 'POST':
+        data = request.json
+        new_provider = Providers(
+            company_name=data.get("company_name"),
+            contact_name=data.get("contact_name"),
+            phone=data.get("phone"),
+            address=data.get("address"),
+            tariff=data.get("tariff"),
+            user_id=data.get("user_id")
+        )
+        db.session.add(new_provider)
+        db.session.commit()
+        response_body['message'] = "Provider created succesfully"
+        response_body['results'] = new_provider.serialize()
+        return response_body, 201
+
+@api.route('/provider/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+def provider(id):
+    response_body = {}
+    provider = db.session.get(Providers, id)
+    if not provider:
+        response_body['message'] = 'Proveedor no encontrado'
+        return response_body, 404
+    if request.method == 'GET':
+        response_body['message'] = f'Proveedor {id} encontrado'
+        response_body['results'] = provider.serialize()
+        return response_body, 200
+    if request.method == 'PUT':
+        data = request.json
+        provider.company_name = data.get("company_name", provider.company_name)
+        provider.contact_name = data.get("contact_name", provider.contact_name)
+        provider.phone = data.get("phone", provider.phone)
+        provider.address = data.get("address", provider.address)
+        provider.tariff = data.get("tariff", provider.tariff)
+        db.session.commit()
+        response_body['message'] = f'Proveedor {id} actualizado correctamente'
+        response_body['results'] = provider.serialize()
+        return response_body, 200
+    if request.method == 'DELETE':
+        db.session.delete(provider)
+        db.session.commit()
+        response_body['message'] = f'Proveedor {id} eliminado correctamente'
         return response_body, 200

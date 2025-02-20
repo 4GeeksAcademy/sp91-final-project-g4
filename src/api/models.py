@@ -10,7 +10,7 @@ class Users(db.Model):
     name = db.Column(db.String(), unique=False, nullable=False)
     last_name = db.Column(db.String(120), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)  # Cambiado para almacenar la contraseña encriptada
+    password_hash = db.Column(db.String(256), nullable=False)
     phone = db.Column(db.String(), unique=False, nullable=False)
     is_admin = db.Column(db.Boolean(), unique=False, nullable=False, default=False)  
     is_customer = db.Column(db.Boolean(), unique=False, nullable=True)
