@@ -105,7 +105,7 @@ def user(id):
         response_body['message'] = f'Respuesta desde {request.method}'
         return response_body, 200
 
-@api.route('/customers', methods=['GET'])
+@api.route('/customers', methods=['GET', 'POST'])
 def customers():
     response_body = {}
     if request.method == 'GET':
@@ -114,6 +114,19 @@ def customers():
         response_body['message'] = "Listado de clientes" 
         response_body['results'] = result
         return response_body, 200
+    if request.method == 'POST':
+        data = request.json
+        new_customer = Customers(
+            company_name=data.get("company_name"),
+            contact_name=data.get("contact_name"),
+            phone=data.get("phone"),
+            address=data.get("address"),
+            user_id=data.get("user_id"))
+        db.session.add(new_customer)
+        db.session.commit()
+        response_body['message'] = "Cliente creado exitosamente"
+        response_body['results'] = new_customer.serialize()
+        return response_body, 201
     
 @api.route('/customer/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 def customer(id):
@@ -160,8 +173,7 @@ def providers():
             phone=data.get("phone"),
             address=data.get("address"),
             tariff=data.get("tariff"),
-            user_id=data.get("user_id")
-        )
+            user_id=data.get("user_id"))
         db.session.add(new_provider)
         db.session.commit()
         response_body['message'] = "Provider created succesfully"
@@ -194,4 +206,49 @@ def provider(id):
         db.session.delete(provider)
         db.session.commit()
         response_body['message'] = f'Proveedor {id} eliminado correctamente'
+        return response_body, 200
+
+@api.route('/comments', methods=['GET', 'POST'])
+def comments():
+    response_body = {}
+    if request.method == 'GET':
+        rows = db.session.execute(db.select(Comments)).scalars()
+        result = [row.serialize() for row in rows]
+        response_body['message'] = "Lista de comentarios"
+        response_body['results'] = result
+        return response_body, 200
+    if request.method == 'POST':
+        data = request.json
+        new_comment = Comments(
+            comment=data.get("comment"),
+            user_id=data.get("user_id"),
+            order_id=data.get("order_id"))
+        db.session.add(new_comment)
+        db.session.commit()
+        response_body['message'] = "Comentario creado exitosamente"
+        response_body['results'] = new_comment.serialize()
+        return response_body, 201
+
+@api.route('/comment/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+def comment(id):
+    response_body = {}
+    comment = db.session.get(Comments, id)
+    if not comment:
+        response_body['message'] = 'Comentario no encontrado'
+        return response_body, 404
+    if request.method == 'GET':
+        response_body['message'] = f'Comentario {id} encontrado'
+        response_body['results'] = comment.serialize()
+        return response_body, 200
+    if request.method == 'PUT':
+        data = request.json
+        comment.comment = data.get("comment", comment.comment)
+        db.session.commit()
+        response_body['message'] = f'Comentario {id} actualizado correctamente'
+        response_body['results'] = comment.serialize()
+        return response_body, 200
+    if request.method == 'DELETE':
+        db.session.delete(comment)
+        db.session.commit()
+        response_body['message'] = f'Comentario {id} eliminado correctamente'
         return response_body, 200
