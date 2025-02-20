@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
@@ -10,20 +10,27 @@ class Users(db.Model):
     name = db.Column(db.String(), unique=False, nullable=False)
     last_name = db.Column(db.String(120), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(80), unique=False, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)  # Cambiado para almacenar la contraseña encriptada
     phone = db.Column(db.String(), unique=False, nullable=False)
-    is_admin = db.Column(db.Boolean(), unique=False, nullable=False, default=False)  # Preguntar por roles
-    is_customer = db.Column(db.Boolean(), unique=False, nullable=True) 
+    is_admin = db.Column(db.Boolean(), unique=False, nullable=False, default=False)  
+    is_customer = db.Column(db.Boolean(), unique=False, nullable=True)
 
     def __repr__(self):
         return f'<User: {self.id} - {self.email}>'
 
     def serialize(self):
-        return {"id": self.id,
-                "name": self.name,
-                "last_name": self.last_name,
-                "email": self.email,
-                "phone": self.phone}
+        return {
+            "id": self.id,
+            "name": self.name,
+            "last_name": self.last_name,
+            "email": self.email,
+            "phone": self.phone}
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)  # Encripta la contraseña
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)  # Verifica la contraseña
 
 
 class Vehicles(db.Model):
@@ -81,7 +88,7 @@ class Customers(db.Model):
                 "company_name": self.company_name,
                 "contact_name": self.contact_name,
                 "phone": self.phone,
-                "address": self.email,
+                "address": self.address,
                 "user_id": self.user_id}
     
 
@@ -123,7 +130,7 @@ class Providers(db.Model):
                 "company_name": self.company_name,
                 "contact_name": self.contact_name,
                 "phone": self.phone,
-                "address": self.email,
+                "address": self.address,
                 "tariff": self.tariff,
                 "user_id": self.user_id}
 
