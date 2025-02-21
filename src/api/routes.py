@@ -128,7 +128,7 @@ def customers():
         response_body['results'] = new_customer.serialize()
         return response_body, 201
     
-@api.route('/customer/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@api.route('/customer/<int:id>', methods=['GET', 'PUT', 'DELETE']) 
 def customer(id):
     response_body = {}
     customer = db.session.get(Customers, id)   
@@ -252,3 +252,110 @@ def comment(id):
         db.session.commit()
         response_body['message'] = f'Comentario {id} eliminado correctamente'
         return response_body, 200
+    
+    #  Nuevo
+@api.route('/vehicles', methods=['GET', 'POST'])
+def vehicles():
+    response_body = {}
+    if request.method == 'GET':
+        rows = db.session.execute(db.select(Vehicles)).scalars()
+        result = [row.serialize() for row in rows]
+        response_body['message'] = "Lista de vehiculos"
+        response_body['results'] = result
+        return response_body, 200
+    if request.method == 'POST':
+        data = request.json
+        new_vehicle = Vehicles(
+            brand=data.get("brand"),
+            model=data.get("model"),
+            vehicle_type=data.get("vehicle_type"))
+        db.session.add(new_vehicle)
+        db.session.commit()
+        response_body['message'] = " Vehiculo creado exitosamente"
+        response_body['results'] = new_vehicle.serialize()
+        return response_body, 201
+
+@api.route('/vehicle/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+def vehicle(id):
+    response_body = {}
+    vehicle = db.session.get(Vehicles, id)
+    if not comment:
+        response_body['message'] = 'Vehiculo no encontrado'
+        return response_body, 404
+    if request.method == 'GET':
+        response_body['message'] = f'Vehiculo {id} encontrado'
+        response_body['results'] = vehicle.serialize()
+        return response_body, 200
+    if request.method == 'PUT':
+        data = request.json
+        vehicle = data.get("Vehicle", vehicle)
+        db.session.commit()
+        response_body['message'] = f'Vehicle {id} actualizado correctamente'
+        response_body['results'] = vehicle.serialize()
+        return response_body, 200
+    if request.method == 'DELETE':
+        db.session.delete(vehicle)
+        db.session.commit()
+        response_body['message'] = f'Vehicle {id} eliminado correctamente'
+        return response_body, 200 
+
+@api.route('/vehicles-admin', methods=['POST'])
+def vehicles_admin():
+    response_body = {}
+    if request.method == 'POST':
+        my_list = request.json
+        for data in my_list:
+            new_vehicle = Vehicles(
+                brand=data.get("brand"),
+                model=data.get("model"),
+                vehicle_type=data.get("vehicle_type"))
+            db.session.add(new_vehicle)
+            db.session.commit()
+        response_body['message'] = " Vehiculo creado exitosamente"
+        return response_body, 201
+    
+@api.route('/order_documents', methods=['GET', 'POST'])
+def order_documents():
+     response_body = {}
+     if request.method == 'GET':
+        rows = db.session.execute(db.select(Order_document)).scalars()
+        result = [row.serialize() for row in rows]
+        response_body['message'] = "Documentacion de los pedidos"
+        response_body['results'] = result
+        return jsonify(response_body), 200
+     if request.method == 'POST':
+        data = request.json
+        row = Order_document(
+              document_type=data.get("document_type"),
+              document_url=data.get("document_url"),
+              order_id=data.get("order_id"))
+        db.session.add(row)
+        db.session.commit()
+        response_body['message'] = "Documentacion creada exitosamente"
+        response_body['results'] = row.serialize()
+        return jsonify(response_body), 201
+@api.route('/order_document/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+def order_document_by_id(id):
+    response_body = {}
+    order_document = db.session.get(Order_document, id)
+    if not order_document:
+        response_body['message'] = 'Order_document not found'
+        return jsonify(response_body), 404
+    if request.method == 'GET':
+        response_body['message'] = f'Respuesta desde {request.method}'
+        response_body['results'] = order_document.serialize()
+        return jsonify(response_body), 200
+    if request.method == 'PUT':
+        data = request.json
+        vehicle = data.get("Order_document", order_document)
+        db.session.commit()
+        response_body['message'] = f'Documento {id} actualizado correctamente'
+        response_body['results'] = order_document.serialize()
+        return response_body, 200
+    if request.method == 'DELETE':
+        db.session.delete(order_document)
+        db.session.commit()
+        response_body['message'] = f'Documento {id} eliminado correctamente'
+        return response_body, 200 
+
+        

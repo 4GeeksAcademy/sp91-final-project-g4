@@ -35,9 +35,8 @@ class Users(db.Model):
 
 class Vehicles(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    plate = db.Column(db.String(), unique=True, nullable=False)
-    brand = db.Column(db.String(120), unique=True, nullable=False)
-    model = db.Column(db.String(80), unique=True, nullable=False)
+    brand = db.Column(db.String(120), unique=False, nullable=False)
+    model = db.Column(db.String(80), unique=False, nullable=False)
     vehicle_type = db.Column(db.Enum('Turism', 'Motorcylce', 'SUV','4x4','Van','Extra van', name='vehicles_type'), unique=False, nullable=False)
 
     def __repr__(self):
@@ -45,7 +44,6 @@ class Vehicles(db.Model):
 
     def serialize(self):
         return {"id": self.id,
-                "plate": self.plate,
                 "brand": self.brand,
                 "model": self.model,
                 "vehicle_type": self.vehicle_type}
@@ -71,7 +69,7 @@ class Comments(db.Model):
                 'order_id ': self.order_id}
     
 
-class Customers(db.Model):
+class Customers(db.Model):  # Poner precio de cliente
     id = db.Column(db.Integer(), primary_key=True)
     company_name = db.Column(db.String(), unique=False, nullable=False)
     contact_name = db.Column(db.String(120), unique=False, nullable=False)
@@ -154,6 +152,7 @@ class Locations(db.Model):
 
 class Orders(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    plate = db.Column(db.String(), unique=True, nullable=False)
     distance_km = db.Column(db.Float(), unique=False, nullable=False)
     estimated_date_end = db.Column(db.Date(), unique=False, nullable=False)
     base_cost = db.Column(db.Float(), unique=False, nullable=False)
@@ -182,6 +181,7 @@ class Orders(db.Model):
 
     def serialize(self):
         return {"id": self.id,
+                "plate": self.plate,
                 "distance_km": self.distance_km,
                 "estimated_date_end": self.estimated_date_end,
                 "base_cost": self.base_cost,
