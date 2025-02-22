@@ -11,12 +11,11 @@ class Users(db.Model):
     last_name = db.Column(db.String(120), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    phone = db.Column(db.String(), unique=False, nullable=False)
-    is_admin = db.Column(db.Boolean(), unique=False, nullable=False, default=False)  
-    is_customer = db.Column(db.Boolean(), unique=False, nullable=True)
+    phone = db.Column(db.String(), unique=False, nullable=False) 
+    role = db.Column(db.String(20), nullable=False, default="customer")  # Puede ser "admin", "customer" o "provider"
 
     def __repr__(self):
-        return f'<User: {self.id} - {self.email}>'
+        return f'<User: {self.id} - {self.email} - Role: {self.role}>'
 
     def serialize(self):
         return {
@@ -24,7 +23,8 @@ class Users(db.Model):
             "name": self.name,
             "last_name": self.last_name,
             "email": self.email,
-            "phone": self.phone}
+            "phone": self.phone,
+            "role": self.role}
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)  # Encripta la contraseña
@@ -40,7 +40,7 @@ class Vehicles(db.Model):
     vehicle_type = db.Column(db.Enum('Turism', 'Motorcylce', 'SUV','4x4','Van','Extra van', name='vehicles_type'), unique=False, nullable=False)
 
     def __repr__(self):
-        return f'<User: {self.id} - {self.plate}>'
+        return f'<User: {self.id} - {self.model}>'
 
     def serialize(self):
         return {"id": self.id,
@@ -75,6 +75,7 @@ class Customers(db.Model):  # Poner precio de cliente
     contact_name = db.Column(db.String(120), unique=False, nullable=False)
     phone = db.Column(db.String(), unique=False, nullable=False)
     address = db.Column(db.String(), unique=False, nullable=False)
+    cust_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), unique=True)
     user_customer_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_customer_to', lazy='select'))
     
@@ -87,6 +88,7 @@ class Customers(db.Model):  # Poner precio de cliente
                 "contact_name": self.contact_name,
                 "phone": self.phone,
                 "address": self.address,
+                "cust_base_tariff": self.cust_base_tariff,
                 "user_id": self.user_id}
     
 
@@ -115,7 +117,7 @@ class Providers(db.Model):
     contact_name = db.Column(db.String(120), unique=False, nullable=False)
     phone = db.Column(db.String(), unique=False, nullable=False)
     address = db.Column(db.String(), unique=False, nullable=False)
-    tariff = db.Column(db.Float(), unique=False, nullable=False)
+    prov_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), unique=True)
     user_providers_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_providers_to', lazy='select'))
     
@@ -129,42 +131,50 @@ class Providers(db.Model):
                 "contact_name": self.contact_name,
                 "phone": self.phone,
                 "address": self.address,
-                "tariff": self.tariff,
+                "prov_base_tariff": self.prov_base_tariff,
                 "user_id": self.user_id}
 
 
 class Locations(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(120), unique=False, nullable=False)
-    region = db.Column(db.String(120), unique=True, nullable=False)
-    city = db.Column(db.String(120), unique=False, nullable=False)
-    # Latitud y longitud
-    
+    name = db.Column(db.String(120), nullable=False)
+    region = db.Column(db.String(120), nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    postal_code = db.Column(db.String(120), nullable=False)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    country = db.Column(db.String(120), nullable=True)  
+
     def __repr__(self):
-        return f'<User: {self.id} - {self.name}>'
+        return f'<Location: {self.id} - {self.name}>'
 
     def serialize(self):
-        return {"id": self.id,
-                "name": self.name,
-                "region": self.region,
-                "city": self.city}
+        return {
+            "id": self.id,
+            "name": self.name,
+            "region": self.region,
+            "city": self.city,
+            "postal_code": self.postal_code,
+            "latitude": self.latitude,
+            "longitude": self.longitude, 
+            "country": self.country}
 
 
 class Orders(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    plate = db.Column(db.String(), unique=True, nullable=False)
+    plate = db.Column(db.String(), unique=False, nullable=False)
     distance_km = db.Column(db.Float(), unique=False, nullable=False)
     estimated_date_end = db.Column(db.Date(), unique=False, nullable=False)
     base_cost = db.Column(db.Float(), unique=False, nullable=False)
     corrector_cost = db.Column(db.Float(), unique=False, nullable=False)
-    final_cost = db.Column(db.Float(), unique=True, nullable=False)
+    final_cost = db.Column(db.Float(), unique=False, nullable=False)
     total_customer_price = db.Column(db.Float(), unique=False, nullable=False)
     status_order = db.Column(db.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), unique=False, nullable=False)
     order_created_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    order_acepted_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    in_transit_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    delivered_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    cancel_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
+    order_acepted_date = db.Column(db.Date(), unique=False, nullable=True)
+    in_transit_date = db.Column(db.Date(), unique=False, nullable=True)
+    delivered_date = db.Column(db.Date(), unique=False, nullable=True)
+    cancel_date = db.Column(db.Date(), unique=False, nullable=True)
     customer_id = db.Column(db.Integer(), db.ForeignKey('customers.id'))
     customer_to = db.relationship('Customers', foreign_keys=[customer_id], backref=db.backref('customer_order_to', lazy='select'))
     provider_id = db.Column(db.Integer(), db.ForeignKey('providers.id'))
@@ -194,7 +204,6 @@ class Orders(db.Model):
                 "in_transit_date": self.in_transit_date,
                 "delivered_date": self.delivered_date,
                 "cancel_date": self.cancel_date,
-                "user_id": self.user_id,
                 "customer_id": self.customer_id,
                 "provider_id": self.provider_id,
                 "vehicle_id": self.vehicle_id,

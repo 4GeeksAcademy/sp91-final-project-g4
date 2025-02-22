@@ -15,6 +15,10 @@ from flask_jwt_extended import get_jwt
 
 api = Blueprint('api', __name__)
 CORS(api)  # Allow CORS requests to this API
+"""""
+# API Key de OpenRouteService para geolocalización (Debes reemplazarla con una válida)
+ORS_API_KEY = "5b3ce3597851110001cf624838efe49eff8748218b0a9b692f3fb14e"
+"""""
 
 # Create a route to authenticate your users and return JWTs. The
 # create_access_token() function is used to actually generate the JWT.
@@ -26,12 +30,13 @@ def signup():
     password = data.get("password")
     name = data.get("name", "")
     last_name = data.get("last_name", "")
+    role = data.get("role", "customer")  # Asignamos por defecto "customer
     if not email or not password:
         return jsonify({"message": "Email and password are required"}), 400
     existing_user = db.session.execute(db.select(Users).where(Users.email == email)).scalar()
     if existing_user:
         return jsonify({"message": "El usuario already exist"}), 409
-    new_user = Users(email=email, name=name, last_name=last_name, phone=data.get("phone", ""))
+    new_user = Users(email=email, name=name, last_name=last_name, phone=data.get("phone", ""), role=role)
     new_user.set_password(password)  # Encripta la contraseña
     db.session.add(new_user)
     db.session.commit()
@@ -46,28 +51,23 @@ def login():
     user = db.session.execute(db.select(Users).where(Users.email == email)).scalar()
     if not user or not user.check_password(password):  # Comprobar la contraseña encriptada
         return jsonify({"message": "User or password incorrect"}), 401
-    access_token = create_access_token(identity=email, additional_claims={"user_id": user.id})
+    access_token = create_access_token(identity=email, additional_claims={"user_id": user.id, "role": user.role})
     response_body['access_token'] = access_token
     response_body['message'] = 'User logged'
     response_body['results'] = user.serialize()
     return response_body, 200
 
 @api.route("/protected", methods=["GET"])
-# Protect a route with jwt_required, which will kick out requests
-# without a valid JWT present.
 @jwt_required()
 def protected():
     response_body = {}
-    # Access the identity of the current user with get_jwt_identity
     current_user = get_jwt_identity() # El mail
     additional_claims = get_jwt() # Datos adicionales
-    print(current_user) 
-    print(additional_claims) 
-    #response_body['message'] = f'logged as {current_user}'
+    response_body['message'] = f'logged as {current_user}'
+    response_body['user_id'] = additional_claims.get("user_id")
+    response_body['role'] = additional_claims.get("role")
     return response_body, 200
 
-
-# CRUD de los Users
 @api.route('/users', methods=['GET'])
 def users():
     response_body = {}
@@ -253,7 +253,6 @@ def comment(id):
         response_body['message'] = f'Comentario {id} eliminado correctamente'
         return response_body, 200
     
-    #  Nuevo
 @api.route('/vehicles', methods=['GET', 'POST'])
 def vehicles():
     response_body = {}
@@ -314,6 +313,27 @@ def vehicles_admin():
         response_body['message'] = " Vehiculo creado exitosamente"
         return response_body, 201
     
+@api.route('/locations-admin', methods=['POST'])
+def locations_admin():
+    response_body = {}
+    if request.method == 'POST':
+        my_list = request.json  
+        for data in my_list:
+            new_location = Locations(
+                name=data.get("name"),
+                region=data.get("region"),
+                city=data.get("region"),    
+                postal_code=data.get("postal_code"),  
+                country=data.get("country"),
+                latitude=data.get("latitude"),
+                longitude=data.get("longitude"))
+            db.session.add(new_location)  
+        db.session.commit() 
+        response_body['message'] = "Localidades creadas exitosamente."
+        response_body['total_created'] = len(my_list)
+        return jsonify(response_body), 201 
+    return jsonify({'error': 'Método no permitido'}), 405
+    
 @api.route('/order_documents', methods=['GET', 'POST'])
 def order_documents():
      response_body = {}
@@ -334,6 +354,7 @@ def order_documents():
         response_body['message'] = "Documentacion creada exitosamente"
         response_body['results'] = row.serialize()
         return jsonify(response_body), 201
+
 @api.route('/order_document/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 def order_document_by_id(id):
     response_body = {}
@@ -357,5 +378,166 @@ def order_document_by_id(id):
         db.session.commit()
         response_body['message'] = f'Documento {id} eliminado correctamente'
         return response_body, 200 
+    
+@api.route('/orders', methods=['GET', 'POST'])
+@jwt_required()
+def orders():
+    response_body = {}
+    user_email = get_jwt_identity()  # Usuario autenticado
+    claims = get_jwt()
+    user_role = claims.get("role")  # "customer", "provider", "admin"
+    user_id = claims.get("user_id")  # ID del usuario autenticado
+    if request.method == 'GET':
+        query = db.select(Orders)
+        # Filtrar según el rol
+        if user_role == "customer":
+            query = query.where(Orders.customer_id == user_id)
+        elif user_role == "provider":
+            query = query.where(Orders.provider_id == user_id)
+        orders = db.session.execute(query).scalars()
+        result = [order.serialize() for order in orders]
+        response_body['message'] = "List of orders"
+        response_body['results'] = result
+        return jsonify(response_body), 200
+    if request.method == 'POST':
+        if user_role != "customer":
+            return jsonify({"message": "Only customers can create orders"}), 403
+        data = request.json
+        new_order = Orders(
+            plate=data.get("plate"),
+            distance_km=data.get("distance_km"),
+            estimated_date_end=data.get("estimated_date_end"),
+            base_cost=data.get("base_cost"),
+            corrector_cost=data.get("corrector_cost"),
+            final_cost=data.get("final_cost"),
+            total_customer_price=data.get("total_customer_price"),
+            status_order=data.get("status_order"),
+            order_created_date=data.get("order_created_date"),
+            customer_id=user_id,
+            provider_id=data.get("provider_id"),
+            vehicle_id=data.get("vehicle_id"),
+            origin_id=data.get("origin_id"),
+            destiny_id=data.get("destiny_id"))
+        db.session.add(new_order)
+        db.session.commit()
+        response_body['message'] = "Order created successfully"
+        response_body['results'] = new_order.serialize()
+        return jsonify(response_body), 201
 
-        
+@api.route('/order/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@jwt_required()
+def order(id):
+    response_body = {}
+    user_email = get_jwt_identity()
+    claims = get_jwt()
+    user_role = claims.get("role")
+    user_id = claims.get("user_id")
+    order = db.session.get(Orders, id)
+    if not order:
+        response_body['message'] = 'Order not found'
+        return jsonify(response_body), 404
+    if request.method == 'GET':
+        # Validar acceso
+        if user_role == "customer" and order.customer_id != user_id:
+            return jsonify({"message": "Unauthorized access"}), 403
+        if user_role == "provider" and order.provider_id != user_id:
+            return jsonify({"message": "Unauthorized access"}), 403
+        response_body['message'] = f'Order {id} found'
+        response_body['results'] = order.serialize()
+        return jsonify(response_body), 200
+    if request.method == 'PUT':
+        data = request.json
+        # Solo provider puede cambiar el estado del pedido
+        if user_role == "provider":
+            if "status_order" in data:
+                order.status_order = data["status_order"]
+            else:
+                return jsonify({"message": "Providers can only update status"}), 403
+        elif user_role == "admin":
+            # Admin puede modificar todo
+            order.plate = data.get("plate", order.plate)
+            order.distance_km = data.get("distance_km", order.distance_km)
+            order.estimated_date_end = data.get("estimated_date_end", order.estimated_date_end)
+            order.base_cost = data.get("base_cost", order.base_cost)
+            order.corrector_cost = data.get("corrector_cost", order.corrector_cost)
+            order.final_cost = data.get("final_cost", order.final_cost)
+            order.total_customer_price = data.get("total_customer_price", order.total_customer_price)
+            order.status_order = data.get("status_order", order.status_order)
+            order.order_created_date = data.get("order_created_date", order.order_created_date)
+            order.order_acepted_date = data.get("order_acepted_date", order.order_acepted_date)
+            order.in_transit_date = data.get("in_transit_date", order.in_transit_date)
+            order.delivered_date = data.get("delivered_date", order.delivered_date)
+            order.cancel_date = data.get("cancel_date", order.cancel_date)
+            order.customer_id = data.get("customer_id", order.customer_id)
+            order.provider_id = data.get("provider_id", order.provider_id)
+            order.vehicle_id = data.get("vehicle_id", order.vehicle_id)
+            order.origin_id = data.get("origin_id", order.origin_id)
+            order.destiny_id = data.get("destiny_id", order.destiny_id)
+        else:
+            return jsonify({"message": "Unauthorized to modify orders"}), 403
+        db.session.commit()
+        response_body['message'] = f'Order {id} updated successfully'
+        response_body['results'] = order.serialize()
+        return jsonify(response_body), 200
+    if request.method == 'DELETE':
+        if user_role != "admin":
+            return jsonify({"message": "Only admins can delete orders"}), 403
+        db.session.delete(order)
+        db.session.commit()
+        response_body['message'] = f'Order {id} deleted successfully'
+        return jsonify(response_body), 200
+    
+
+""""
+@api.route('/fetch_location', methods=['POST'])
+def fetch_location():  
+    # Obtiene la geolocalización de una dirección usando OpenRouteService y la almacena en la BD.
+    data = request.json
+    if not data:
+        return jsonify({"message": "No data received"}), 400
+    address = f"{data.get('name')}, {data.get('street', '')}, {data.get('city')}, {data.get('region')}, {data.get('country', 'Spain')}"
+    ors_url = f"https://api.openrouteservice.org/geocode/search?api_key={ORS_API_KEY}&text={address}"
+    response = requests.get(ors_url)
+    if response.status_code != 200:
+        return jsonify({"message": "Failed to fetch location from OpenRouteService"}), 500
+    geo_data = response.json()
+    if "features" in geo_data and geo_data["features"]:
+        coordinates = geo_data["features"][0]["geometry"]["coordinates"]
+        properties = geo_data["features"][0]["properties"]
+        country = properties.get("country", "").lower()
+        if country != "spain":
+            return jsonify({"message": "Location must be in Spain"}), 400
+        latitude, longitude = coordinates[1], coordinates[0]
+        # Guardar en la BD
+        new_location = Locations(
+            name=data.get("name"),
+            region=data.get("region"),
+            city=data.get("city"),
+            latitude=latitude,
+            longitude=longitude,
+            street=data.get("street"),
+            country="Spain")         
+        db.session.add(new_location)
+        db.session.commit()
+        return jsonify({"message": "Location stored successfully", "results": new_location.serialize()}), 201  
+    return jsonify({"message": "Could not fetch location"}), 400
+"""
+""" 
+# ✅ ENDPOINT PARA ASIGNAR UN PROVEEDOR A UNA ORDEN
+@api.route('/assign_order/<int:order_id>', methods=['PUT'])
+def assign_order(order_id):
+    data = request.json
+    order = db.session.get(Orders, order_id)
+    if not order:
+        return jsonify({"message": "Order not found"}), 404
+    provider = db.session.get(Providers, data.get("provider_id"))
+    if not provider:
+        return jsonify({"message": "Provider not found"}), 404
+    order.provider_id = provider.id
+    order.status_order = "Order accepted"
+    order.order_acepted_date = datetime.utcnow()
+    order.base_cost = provider.tariff
+    order.final_cost = order.distance_km * provider.tariff * order.corrector_cost
+    db.session.commit()
+    return jsonify({"message": f"Order {order_id} assigned to provider {provider.id}", "results": order.serialize()}), 200
+"""
