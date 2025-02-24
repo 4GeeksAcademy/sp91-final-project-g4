@@ -333,6 +333,28 @@ def locations_admin():
         response_body['total_created'] = len(my_list)
         return jsonify(response_body), 201 
     return jsonify({'error': 'Método no permitido'}), 405
+
+@api.route('/locations', methods=['GET'])
+def locations():
+    response_body = {}
+    if request.method == 'GET':
+        rows = db.session.execute(db.select(Locations)).scalars()
+        result = [row.serialize() for row in rows]
+        response_body['message'] = "Lista de localidades"
+        response_body['results'] = result
+        return response_body, 200
+    
+@api.route('/location/<int:id>', methods=['GET'])
+def location(id):
+    response_body = {}
+    location = db.session.get(Locations, id)
+    if not comment:
+        response_body['message'] = 'Localidad no encontrada'
+        return response_body, 404
+    if request.method == 'GET':
+        response_body['message'] = f'Localidad {id} encontrada'
+        response_body['results'] = location.serialize()
+        return response_body, 200
     
 @api.route('/order_documents', methods=['GET', 'POST'])
 def order_documents():
