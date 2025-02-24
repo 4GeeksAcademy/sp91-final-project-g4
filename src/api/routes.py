@@ -117,3 +117,61 @@ def protected():
     print(additional_claims)
     #response_body['message'] = f'logged as {current_user}'
     return response_body, 200
+
+
+@api.route('/order_document', methods=['GET', 'POST'])
+def order_documents():
+    response_body = {}
+
+    if request.method == 'GET':
+        rows = db.session.execute(db.select(Order_document)).scalars()
+        result = [row.serialize() for row in rows]
+        response_body['message'] = "Documentacion de los pedidos"
+        response_body['results'] = result
+        return jsonify(response_body), 200
+
+    if request.method == 'POST':
+        data = request.json
+        row = Order_document(
+            document_type=data.get("document_type"),
+            document_url=data.get("document_url"),
+            order_id=data.get("order_id")  
+        )
+        db.session.add(row)
+        db.session.commit()
+        
+        response_body['message'] = "Documentacion creada exitosamente"
+        response_body['results'] = row.serialize()
+        return jsonify(response_body), 201
+
+@api.route('/order_document/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+def order_document_by_id(id):
+    response_body = {}
+
+    order_document = db.session.get(Order_document, id)
+    if not order_document:
+        response_body['message'] = 'Order_document not found'
+        return jsonify(response_body), 404
+
+    if request.method == 'GET':
+        response_body['message'] = f'Respuesta desde {request.method}'
+        response_body['results'] = order_document.serialize()
+        return jsonify(response_body), 200
+
+    if request.method == 'PUT':
+        data = request.json
+        order_document.document_type = data.get("document_type", order_document.document_type)
+        order_document.document_url = data.get("document_url", order_document.document_url)
+        order_document.order_id = data.get("order_id", order_document.order_id)  # Corregido
+
+        db.session.commit()
+        response_body['message'] = f'Documento {id} actualizado exitosamente'
+        response_body['results'] = order_document.serialize()
+        return jsonify(response_body), 200
+
+    if request.method == 'DELETE':
+        db.session.delete(order_document)
+        db.session.commit()
+        response_body['message'] = f'Order_document {id} eliminado exitosamente'
+        return jsonify(response_body), 200
+
