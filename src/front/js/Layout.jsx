@@ -9,6 +9,8 @@ import ScrollToTop from "./component/ScrollToTop.jsx";
 import { BackendURL } from "./component/BackendURL.jsx";
 // Custom pages or views
 import { Home } from "./pages/Home.jsx";
+import { Login } from "./pages/Login.jsx";
+import { SignUp } from "./pages/SignUp.jsx";
 import { Vehicles } from "./pages/Vehicles.jsx";
 import { Prices } from "./pages/Prices.jsx";
 import { Orders } from "./pages/Orders.jsx";
@@ -24,7 +26,7 @@ const Layout = () => {
     if (!process.env.BACKEND_URL || process.env.BACKEND_URL == "") return <BackendURL />;
 
     return (
-        <div>
+        <div className="d-flex flex-column min-vh-100">
             <UserProvider> {/* Envolver todo con UserProvider */}
                 <BrowserRouter>
                     <ScrollToTop>
@@ -37,6 +39,8 @@ const Layout = () => {
                             <Route element={<CustomerOrders />} path="/customer-orders" />
                             <Route element={<Admin />} path="/admin" />
                             <Route path="*" element={<h1>Not found!</h1>} />
+                        <Route element={<Login/>} path= "/login" />
+                        <Route element={<SignUp/>} path= "/sign-up" />
                         </Routes>
                         <Footer />
                     </ScrollToTop>
