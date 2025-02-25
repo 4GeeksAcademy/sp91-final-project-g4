@@ -1,8 +1,11 @@
 import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
+import { useUser } from "../store/userContext"; // Importar el hook de contexto de usuario
 
 export const Navbar = () => {
+  const { user } = useUser(); // Obtener el usuario del contexto
+
 
   const { store, actions } = useContext(Context)
   const navigate = useNavigate() 
@@ -35,12 +38,16 @@ export const Navbar = () => {
         </button>
         <div className="collapse navbar-collapse justify-content-end" id="navbarColor01">
           <ul className="navbar-nav">
+            {/* Siempre visible */}
             <li className="nav-item">
               <Link className="nav-link active" to="/">Home</Link>
             </li>
-{/*             <li className="nav-item">
+            <li className="nav-item">
+              <Link className="nav-link" to="/registro">Registro</Link>
+            </li>
+            <li className="nav-item">
               <Link className="nav-link" to="/iniciosesion">Inicio sesión</Link>
-              </li> */}
+            </li>
             <li className="nav-item dropdown">
               <a
                 className="nav-link dropdown-toggle"
@@ -56,8 +63,6 @@ export const Navbar = () => {
                 <Link className="dropdown-item" to="/vehiculos">Vehículos</Link>
                 <Link className="dropdown-item" to="/tarifas">Tarifas</Link>
                 <Link className="dropdown-item" to="/mis-pedidos">Mis pedidos</Link>
-              <li className="nav-item">
-              </li>
               </div>
             </li>
           </ul>
