@@ -482,7 +482,7 @@ def orders():
             return jsonify({"message": "Origin or destination not found"}), 404
 
         # 🔴 Buscar cliente en la BD
-        customer = db.session.execute(db.select(Customers).where(Customers.user_id == user_id)).scalar()
+        customer = db.session.execute(db.select(Customers).where(Customers.id == data.get("customer_id"))).scalar()
         if not customer:
             return jsonify({"message": "Customer not found"}), 404
 
@@ -519,11 +519,10 @@ def orders():
             cust_base_tariff=cust_base_tariff,
             status_order="Order created",
             order_created_date=datetime.utcnow(),
-            customer_id=user_id,
+            customer_id=data.get("customer_id"),
             vehicle_id=vehicle_id,
             origin_id=origin_id,
-            destiny_id=destination_id
-        )
+            destiny_id=destination_id)
 
         db.session.add(new_order)
         db.session.commit()

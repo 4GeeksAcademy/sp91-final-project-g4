@@ -167,7 +167,7 @@ class Orders(db.Model):
     estimated_date_end = db.Column(db.Date(), unique=False, nullable=False)
     corrector_cost = db.Column(db.Float(), unique=False, nullable=False)
     final_cost = db.Column(db.Float(), unique=False, nullable=False)
-    prov_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
+    prov_base_tariff = db.Column(db.Float(), unique=False, nullable=True)
     cust_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
     status_order = db.Column(db.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), unique=False, nullable=False)
     order_created_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
