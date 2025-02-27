@@ -8,7 +8,7 @@ export const Vehicles= () => {
 		return (
 		  <div>
 			<h1>Vehículos</h1>
-			<p>Aquí se mostrará la lista de vehículos.</p>
+			<p>Aquí se mostrará la lista de vehículos tabla.</p>
 		  </div>
 		);
 	  };

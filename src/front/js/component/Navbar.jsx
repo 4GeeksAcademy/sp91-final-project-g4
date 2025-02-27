@@ -52,7 +52,6 @@ export const Navbar = () => {
               <a
                 className="nav-link dropdown-toggle"
                 data-bs-toggle="dropdown"
-                href="#"
                 role="button"
                 aria-haspopup="true"
                 aria-expanded="false"
