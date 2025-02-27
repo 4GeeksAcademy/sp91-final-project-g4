@@ -12,13 +12,51 @@ from api.models import db, Users, Vehicles, Comments, Customers, Order_document,
 
 api = Blueprint('api', __name__)
 CORS(api)  # Allow CORS requests to this API
-"""""
+
 # API Key de OpenRouteService para geolocalización (Debes reemplazarla con una válida)
 ORS_API_KEY = "5b3ce3597851110001cf624838efe49eff8748218b0a9b692f3fb14e"
-"""""
 
-# Create a route to authenticate your users and return JWTs. The
-# create_access_token() function is used to actually generate the JWT.
+@api.route("/calculate-distance", methods=["POST"])
+@jwt_required()  # Requiere autenticación JWT
+def calculate_distance():
+    response_body = {}
+    # Obtener datos de la solicitud
+    data = request.json
+    origin_id = data.get("origin_id")
+    destination_id = data.get("destination_id")
+    # Validar que se proporcionaron las ubicaciones
+    if not origin_id or not destination_id:
+        return jsonify({"message": "Debes proporcionar 'origin_id' y 'destination_id'"}), 400
+    # Buscar las ubicaciones en la base de datos
+    origin = db.session.execute(db.select(Locations).where(Locations.id == origin_id)).scalar()
+    destination = db.session.execute(db.select(Locations).where(Locations.id == destination_id)).scalar()
+    if not origin or not destination:
+        return jsonify({"message": "Una o ambas ubicaciones no existen"}), 404
+    # Construir la petición a la API externa
+    url = "https://api.openrouteservice.org/v2/matrix/driving-car"
+    headers = {"Authorization": ORS_API_KEY, "Content-Type": "application/json"}
+    body = {
+        "locations": [
+            [origin.longitude, origin.latitude],
+            [destination.longitude, destination.latitude]
+        ],"metrics": ["distance"]}
+    # Hacer la solicitud a OpenRouteService
+    try:
+        response = requests.post(url, json=body, headers=headers)
+        response_data = response.json()
+        # Extraer la distancia en metros y convertir a kilómetros
+        distance_meters = response_data["distances"][0][1]
+        distance_km = round(distance_meters / 1000, 2)
+        # Construir respuesta
+        response_body["message"] = "Distancia calculada correctamente"
+        response_body["results"] = {
+            "origin": origin.name,
+            "destination": destination.name,
+            "distance_km": distance_km}
+        return response_body, 200
+    except Exception as e:
+        return jsonify({"message": "Error al conectar con OpenRouteService", "error": str(e)}), 500
+
 # ✅ REGISTRO DE USUARIO (SIGNUP)
 @api.route("/users", methods=["POST"])
 def signup():
@@ -402,6 +440,205 @@ def order_document_by_id(id):
 @jwt_required()
 def orders():
     response_body = {}
+    user_email = get_jwt_identity()
+    claims = get_jwt()
+    user_role = claims.get("role")
+    user_id = claims.get("user_id")
+
+    # 🔹 **GET: Obtener órdenes según el rol**
+    if request.method == 'GET':
+        query = db.select(Orders)
+
+        if user_role == "customer":
+            query = query.where(Orders.customer_id == user_id)
+        elif user_role == "provider":
+            query = query.where(Orders.provider_id == user_id)
+
+        orders = db.session.execute(query).scalars()
+        result = [order.serialize() for order in orders]
+        response_body['message'] = "List of orders"
+        response_body['results'] = result
+        return jsonify(response_body), 200
+
+    # 🔹 **POST: Solo clientes y administradores pueden crear órdenes sin proveedor asignado**
+    if request.method == 'POST':
+        if user_role not in ["customer", "admin"]:
+            return jsonify({"message": "Only customers and admins can create orders"}), 403
+
+        data = request.json
+        origin_id = data.get("origin_id")
+        destination_id = data.get("destiny_id")
+        vehicle_id = data.get("vehicle_id")
+        corrector_cost = data.get("corrector_cost", 0)
+
+        # 🔴 Validaciones
+        if not origin_id or not destination_id or not vehicle_id:
+            return jsonify({"message": "Missing required fields (origin_id, destiny_id, vehicle_id)"}), 400
+
+        # 🔴 Buscar ubicaciones en la BD
+        origin = db.session.execute(db.select(Locations).where(Locations.id == origin_id)).scalar()
+        destination = db.session.execute(db.select(Locations).where(Locations.id == destination_id)).scalar()
+        if not origin or not destination:
+            return jsonify({"message": "Origin or destination not found"}), 404
+
+        # 🔴 Buscar cliente en la BD
+        customer = db.session.execute(db.select(Customers).where(Customers.user_id == user_id)).scalar()
+        if not customer:
+            return jsonify({"message": "Customer not found"}), 404
+
+        # 🔴 Obtener distancia en tiempo real usando la API externa
+        url = "https://api.openrouteservice.org/v2/matrix/driving-car"
+        headers = {"Authorization": ORS_API_KEY, "Content-Type": "application/json"}
+        body = {
+            "locations": [
+                [origin.longitude, origin.latitude],
+                [destination.longitude, destination.latitude]
+            ],
+            "metrics": ["distance"]
+        }
+
+        try:
+            response = requests.post(url, json=body, headers=headers)
+            response_data = response.json()
+            distance_meters = response_data["distances"][0][1]
+            distance_km = round(distance_meters / 1000, 2)
+        except Exception as e:
+            return jsonify({"message": "Error connecting to OpenRouteService", "error": str(e)}), 500
+
+        # 🔴 Calcular tarifa del cliente
+        cust_base_tariff = customer.cust_base_tariff
+        final_cost_customer = (cust_base_tariff * distance_km) + corrector_cost
+
+        # 🔴 Crear orden SIN proveedor asignado
+        new_order = Orders(
+            plate=data.get("plate"),
+            distance_km=distance_km,
+            estimated_date_end=data.get("estimated_date_end"),
+            corrector_cost=corrector_cost,
+            final_cost=final_cost_customer,  
+            cust_base_tariff=cust_base_tariff,
+            status_order="Order created",
+            order_created_date=datetime.utcnow(),
+            customer_id=user_id,
+            vehicle_id=vehicle_id,
+            origin_id=origin_id,
+            destiny_id=destination_id
+        )
+
+        db.session.add(new_order)
+        db.session.commit()
+
+        # 🔴 Respuesta con detalles de la orden creada
+        response_body["message"] = "Order created successfully (without provider assigned)"
+        response_body["order"] = new_order.serialize()
+        response_body["distance_km"] = distance_km
+        response_body["final_cost_customer"] = round(final_cost_customer, 2)
+
+        return jsonify(response_body), 201
+
+
+# 🔹 **Endpoint para que un admin asigne un proveedor a la orden**
+@api.route('/assign-provider/<int:order_id>', methods=['PUT'])
+@jwt_required()
+def assign_provider(order_id):
+    response_body = {}
+    claims = get_jwt()
+    user_role = claims.get("role")
+
+    if user_role != "admin":
+        return jsonify({"message": "Only admins can assign providers"}), 403
+
+    order = db.session.get(Orders, order_id)
+    if not order:
+        return jsonify({"message": "Order not found"}), 404
+
+    data = request.json
+    provider_id = data.get("provider_id")
+
+    # 🔴 Buscar proveedor en la BD
+    provider = db.session.execute(db.select(Providers).where(Providers.id == provider_id)).scalar()
+    if not provider:
+        return jsonify({"message": "Provider not found"}), 404
+
+    # 🔴 Obtener distancia en tiempo real usando la API externa
+    url = "https://api.openrouteservice.org/v2/matrix/driving-car"
+    headers = {"Authorization": ORS_API_KEY, "Content-Type": "application/json"}
+    body = {
+        "locations": [
+            [order.location_origin_to.longitude, order.location_origin_to.latitude],
+            [order.location_destiny_to.longitude, order.location_destiny_to.latitude]
+        ],
+        "metrics": ["distance"]
+    }
+
+    try:
+        response = requests.post(url, json=body, headers=headers)
+        response_data = response.json()
+        distance_meters = response_data["distances"][0][1]
+        distance_km = round(distance_meters / 1000, 2)
+    except Exception as e:
+        return jsonify({"message": "Error connecting to OpenRouteService", "error": str(e)}), 500
+
+    # 🔴 Calcular tarifa del proveedor
+    prov_base_tariff = provider.prov_base_tariff
+    final_cost_provider = (prov_base_tariff * distance_km) + order.corrector_cost
+
+    # 🔴 Asignar proveedor a la orden
+    order.provider_id = provider_id
+    order.final_cost = final_cost_provider
+    order.status_order = "Provider assigned"
+
+    db.session.commit()
+
+    response_body["message"] = "Provider assigned successfully"
+    response_body["order"] = order.serialize()
+    response_body["final_cost_provider"] = round(final_cost_provider, 2)
+
+    return jsonify(response_body), 200
+
+@api.route('/order/<int:order_id>', methods=['GET'])
+@jwt_required()
+def get_order(order_id):
+    response_body = {}
+    claims = get_jwt()
+    user_role = claims.get("role")
+    user_id = claims.get("user_id")
+
+    # Buscar la orden en la base de datos
+    order = db.session.get(Orders, order_id)
+    if not order:
+        return jsonify({"message": "Order not found"}), 404
+
+    # 🔹 **ADMIN puede ver todas las órdenes**
+    if user_role == "admin":
+        response_body["message"] = f"Order {order_id} found"
+        response_body["order"] = order.serialize()
+        return jsonify(response_body), 200
+
+    # 🔹 **CLIENTE: Verifica si pertenece al cliente de la orden**
+    customer = db.session.execute(db.select(Customers).where(Customers.user_id == user_id)).scalar()
+    if customer and order.customer_id == customer.id:
+        response_body["message"] = f"Order {order_id} found"
+        response_body["order"] = order.serialize()
+        return jsonify(response_body), 200
+
+    # 🔹 **PROVEEDOR: Verifica si pertenece al proveedor de la orden**
+    provider = db.session.execute(db.select(Providers).where(Providers.user_id == user_id)).scalar()
+    if provider and order.provider_id == provider.id:
+        response_body["message"] = f"Order {order_id} found"
+        response_body["order"] = order.serialize()
+        return jsonify(response_body), 200
+
+    # ❌ **Si no cumple ninguna regla, denegar acceso**
+    return jsonify({"message": "Unauthorized access"}), 403
+
+
+
+"""""    
+@api.route('/orders', methods=['GET', 'POST'])
+@jwt_required()
+def orders():
+    response_body = {}
     user_email = get_jwt_identity()  # Usuario autenticado
     claims = get_jwt()
     user_role = claims.get("role")  # "customer", "provider", "admin"
@@ -507,39 +744,7 @@ def order(id):
         return jsonify(response_body), 200
     
 
-""""
-@api.route('/fetch_location', methods=['POST'])
-def fetch_location():  
-    # Obtiene la geolocalización de una dirección usando OpenRouteService y la almacena en la BD.
-    data = request.json
-    if not data:
-        return jsonify({"message": "No data received"}), 400
-    address = f"{data.get('name')}, {data.get('street', '')}, {data.get('city')}, {data.get('region')}, {data.get('country', 'Spain')}"
-    ors_url = f"https://api.openrouteservice.org/geocode/search?api_key={ORS_API_KEY}&text={address}"
-    response = requests.get(ors_url)
-    if response.status_code != 200:
-        return jsonify({"message": "Failed to fetch location from OpenRouteService"}), 500
-    geo_data = response.json()
-    if "features" in geo_data and geo_data["features"]:
-        coordinates = geo_data["features"][0]["geometry"]["coordinates"]
-        properties = geo_data["features"][0]["properties"]
-        country = properties.get("country", "").lower()
-        if country != "spain":
-            return jsonify({"message": "Location must be in Spain"}), 400
-        latitude, longitude = coordinates[1], coordinates[0]
-        # Guardar en la BD
-        new_location = Locations(
-            name=data.get("name"),
-            region=data.get("region"),
-            city=data.get("city"),
-            latitude=latitude,
-            longitude=longitude,
-            street=data.get("street"),
-            country="Spain")         
-        db.session.add(new_location)
-        db.session.commit()
-        return jsonify({"message": "Location stored successfully", "results": new_location.serialize()}), 201  
-    return jsonify({"message": "Could not fetch location"}), 400
+
 """
 """ 
 # ✅ ENDPOINT PARA ASIGNAR UN PROVEEDOR A UNA ORDEN

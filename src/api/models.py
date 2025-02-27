@@ -165,10 +165,10 @@ class Orders(db.Model):
     plate = db.Column(db.String(), unique=False, nullable=False)
     distance_km = db.Column(db.Float(), unique=False, nullable=False)
     estimated_date_end = db.Column(db.Date(), unique=False, nullable=False)
-    base_cost = db.Column(db.Float(), unique=False, nullable=False)
     corrector_cost = db.Column(db.Float(), unique=False, nullable=False)
     final_cost = db.Column(db.Float(), unique=False, nullable=False)
-    total_customer_price = db.Column(db.Float(), unique=False, nullable=False)
+    prov_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
+    cust_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
     status_order = db.Column(db.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), unique=False, nullable=False)
     order_created_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     order_acepted_date = db.Column(db.Date(), unique=False, nullable=True)
@@ -194,10 +194,10 @@ class Orders(db.Model):
                 "plate": self.plate,
                 "distance_km": self.distance_km,
                 "estimated_date_end": self.estimated_date_end,
-                "base_cost": self.base_cost,
                 "corrector_cost": self.corrector_cost,
                 "final_cost": self.final_cost,
-                "total_customer_price": self.total_customer_price,
+                "prov_base_tariff": self.prov_base_tariff,
+                "cust_base_tariff": self.cust_base_tariff,
                 "status_order": self.status_order,
                 "order_created_date": self.order_created_date,
                 "order_acepted_date": self.order_acepted_date,
