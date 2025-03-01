@@ -13,6 +13,7 @@ class Users(db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     phone = db.Column(db.String(), unique=False, nullable=False) 
     role = db.Column(db.String(20), nullable=False, default="customer")  # Puede ser "admin", "customer" o "provider"
+    is_active = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
         return f'<User: {self.id} - {self.email} - Role: {self.role}>'
@@ -24,7 +25,8 @@ class Users(db.Model):
             "last_name": self.last_name,
             "email": self.email,
             "phone": self.phone,
-            "role": self.role}
+            "role": self.role,
+            "is_active": self.is_active}
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)  # Encripta la contraseña
@@ -35,39 +37,36 @@ class Users(db.Model):
 
 class Vehicles(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    brand = db.Column(db.String(120), unique=False, nullable=False)
-    model = db.Column(db.String(80), unique=False, nullable=False)
-    vehicle_type = db.Column(db.Enum('Turism', 'Motorcylce', 'SUV','4x4','Van','Extra van', name='vehicles_type'), unique=False, nullable=False)
+    brand = db.Column(db.String(120), nullable=False)
+    model = db.Column(db.String(80), nullable=False)
+    vehicle_type = db.Column(db.Enum('Turism', 'Motorcycle', 'SUV', '4x4', 'Van', 'Extra van', name='vehicles_type'), nullable=False)
+    corrector_cost = db.Column(db.Float(), nullable=False)
 
-    def __repr__(self):
-        return f'<User: {self.id} - {self.model}>'
+    def __init__(self, brand, model, vehicle_type):
+        self.brand = brand
+        self.model = model
+        self.vehicle_type = vehicle_type
+        self.corrector_cost = self.calculate_corrector_cost()
+
+    def calculate_corrector_cost(self):
+        corrector_values = {
+            "Turism": 0.0,
+            "Motorcylce": 0.0,
+            "SUV": 0.2,
+            "4x4": 0.3,
+            "Van": 0.5,
+            "Extra van": 0.7
+        }
+        return corrector_values.get(self.vehicle_type, 0.0)
 
     def serialize(self):
-        return {"id": self.id,
-                "brand": self.brand,
-                "model": self.model,
-                "vehicle_type": self.vehicle_type}
-
-
-class Comments(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
-    comment = db.Column(db.String(), unique=False, nullable=True)
-    date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
-    user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('comment_to', lazy='select'))
-    order_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
-    order_to = db.relationship('Orders', foreign_keys=[order_id], backref=db.backref('comment_to', lazy='select'))
-
-    def __repr__(self):
-            return f'<Comment: {self.id} - {self.comment}>'
-    
-    def serialize(self):
-        return {'id': self.id,
-                'comment': self.comment,
-                'date': self.date,
-                'user_id': self.user_id,
-                'order_id ': self.order_id}
-    
+        return {
+            "id": self.id,
+            "brand": self.brand,
+            "model": self.model,
+            "vehicle_type": self.vehicle_type,
+            "corrector_cost": self.corrector_cost
+        }
 
 class Customers(db.Model):  # Poner precio de cliente
     id = db.Column(db.Integer(), primary_key=True)
@@ -77,6 +76,7 @@ class Customers(db.Model):  # Poner precio de cliente
     address = db.Column(db.String(), unique=False, nullable=False)
     cust_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), unique=True)
+    is_active = db.Column(db.Boolean, default=True)
     user_customer_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_customer_to', lazy='select'))
     
     def __repr__(self):
@@ -89,7 +89,8 @@ class Customers(db.Model):  # Poner precio de cliente
                 "phone": self.phone,
                 "address": self.address,
                 "cust_base_tariff": self.cust_base_tariff,
-                "user_id": self.user_id}
+                "user_id": self.user_id,
+                "is_active": self.is_active}
     
 
 class Order_document(db.Model):
@@ -119,6 +120,7 @@ class Providers(db.Model):
     address = db.Column(db.String(), unique=False, nullable=False)
     prov_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), unique=True)
+    is_active = db.Column(db.Boolean, default=True)
     user_providers_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_providers_to', lazy='select'))
     
 
@@ -132,7 +134,8 @@ class Providers(db.Model):
                 "phone": self.phone,
                 "address": self.address,
                 "prov_base_tariff": self.prov_base_tariff,
-                "user_id": self.user_id}
+                "user_id": self.user_id,
+                "is_active": self.is_active}
 
 
 class Locations(db.Model):
@@ -165,10 +168,10 @@ class Orders(db.Model):
     plate = db.Column(db.String(), unique=False, nullable=False)
     distance_km = db.Column(db.Float(), unique=False, nullable=False)
     estimated_date_end = db.Column(db.Date(), unique=False, nullable=False)
-    base_cost = db.Column(db.Float(), unique=False, nullable=False)
     corrector_cost = db.Column(db.Float(), unique=False, nullable=False)
     final_cost = db.Column(db.Float(), unique=False, nullable=False)
-    total_customer_price = db.Column(db.Float(), unique=False, nullable=False)
+    prov_base_tariff = db.Column(db.Float(), unique=False, nullable=True)
+    cust_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
     status_order = db.Column(db.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), unique=False, nullable=False)
     order_created_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     order_acepted_date = db.Column(db.Date(), unique=False, nullable=True)
@@ -185,19 +188,20 @@ class Orders(db.Model):
     location_destiny_to = db.relationship('Locations', foreign_keys=[destiny_id], backref=db.backref('location_destiny_to', lazy='select'))
     origin_id = db.Column(db.Integer(), db.ForeignKey('locations.id'))
     location_origin_to = db.relationship('Locations', foreign_keys=[origin_id], backref=db.backref('location_origin_to', lazy='select'))
+    comment = db.Column(db.Text, nullable=True)
   
     def __repr__(self):
-        return f'<User: {self.id} - {self.user_id}>' 
+        return f'<Order: {self.id} - Customer: {self.customer_id} - Provider: {self.provider_id}>'
 
     def serialize(self):
         return {"id": self.id,
                 "plate": self.plate,
                 "distance_km": self.distance_km,
                 "estimated_date_end": self.estimated_date_end,
-                "base_cost": self.base_cost,
                 "corrector_cost": self.corrector_cost,
                 "final_cost": self.final_cost,
-                "total_customer_price": self.total_customer_price,
+                "prov_base_tariff": self.prov_base_tariff,
+                "cust_base_tariff": self.cust_base_tariff,
                 "status_order": self.status_order,
                 "order_created_date": self.order_created_date,
                 "order_acepted_date": self.order_acepted_date,
@@ -208,5 +212,26 @@ class Orders(db.Model):
                 "provider_id": self.provider_id,
                 "vehicle_id": self.vehicle_id,
                 "origin_id": self.origin_id,
-                "destiny_id": self.destiny_id}
+                "destiny_id": self.destiny_id,
+                "comment": self.comment}
     
+"""""
+class Comments(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    comment = db.Column(db.String(), unique=False, nullable=True)
+    date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
+    user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('comment_to', lazy='select'))
+    order_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
+    order_to = db.relationship('Orders', foreign_keys=[order_id], backref=db.backref('comment_to', lazy='select'))
+
+    def __repr__(self):
+            return f'<Comment: {self.id} - {self.comment}>'
+    
+    def serialize(self):
+        return {'id': self.id,
+                'comment': self.comment,
+                'date': self.date,
+                'user_id': self.user_id,
+                'order_id ': self.order_id}
+"""""
