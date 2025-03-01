@@ -68,27 +68,6 @@ class Vehicles(db.Model):
             "corrector_cost": self.corrector_cost
         }
 
-"""""
-class Comments(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
-    comment = db.Column(db.String(), unique=False, nullable=True)
-    date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
-    user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('comment_to', lazy='select'))
-    order_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
-    order_to = db.relationship('Orders', foreign_keys=[order_id], backref=db.backref('comment_to', lazy='select'))
-
-    def __repr__(self):
-            return f'<Comment: {self.id} - {self.comment}>'
-    
-    def serialize(self):
-        return {'id': self.id,
-                'comment': self.comment,
-                'date': self.date,
-                'user_id': self.user_id,
-                'order_id ': self.order_id}
-"""""
-
 class Customers(db.Model):  # Poner precio de cliente
     id = db.Column(db.Integer(), primary_key=True)
     company_name = db.Column(db.String(), unique=False, nullable=False)
@@ -212,7 +191,7 @@ class Orders(db.Model):
     comment = db.Column(db.Text, nullable=True)
   
     def __repr__(self):
-        return f'<User: {self.id} - {self.user_id}>' 
+        return f'<Order: {self.id} - Customer: {self.customer_id} - Provider: {self.provider_id}>'
 
     def serialize(self):
         return {"id": self.id,
@@ -236,3 +215,23 @@ class Orders(db.Model):
                 "destiny_id": self.destiny_id,
                 "comment": self.comment}
     
+"""""
+class Comments(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    comment = db.Column(db.String(), unique=False, nullable=True)
+    date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
+    user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('comment_to', lazy='select'))
+    order_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
+    order_to = db.relationship('Orders', foreign_keys=[order_id], backref=db.backref('comment_to', lazy='select'))
+
+    def __repr__(self):
+            return f'<Comment: {self.id} - {self.comment}>'
+    
+    def serialize(self):
+        return {'id': self.id,
+                'comment': self.comment,
+                'date': self.date,
+                'user_id': self.user_id,
+                'order_id ': self.order_id}
+"""""
