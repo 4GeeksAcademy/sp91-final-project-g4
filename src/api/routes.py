@@ -674,8 +674,15 @@ def get_order(order_id):
     # Si no cumple ninguna regla, denegar acceso
     return jsonify({"message": "Unauthorized access"}), 403
 
-
-
+"""""
+if request.method == 'DELETE':
+        if user_role != "admin":
+            return jsonify({"message": "Only admins can delete orders"}), 403
+        order.status_order = "Cancel"
+        db.session.commit()
+        response_body['message'] = f'Order {id} deleted successfully'
+        return jsonify(response_body), 200
+"""""
 """ 
 @api.route('/orders', methods=['GET', 'POST'])
 @jwt_required()
