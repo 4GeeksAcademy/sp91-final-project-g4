@@ -9,6 +9,7 @@ import ScrollToTop from "./component/ScrollToTop.jsx";
 import { BackendURL } from "./component/BackendURL.jsx";
 // Custom pages or views
 import { Home } from "./pages/Home.jsx";
+import { AboutUs } from "./pages/AboutUs.jsx";
 import { Login } from "./pages/Login.jsx";
 import { SignUp } from "./pages/SignUp.jsx";
 import { Vehicles } from "./pages/Vehicles.jsx";
@@ -33,6 +34,7 @@ const Layout = () => {
                         <Navbar />
                         <Routes>
                             <Route element={<Home />} path="/" />
+                            <Route element={<AboutUs />} path="/aboutus" />
                             <Route element={<Vehicles />} path="/vehicles" />
                             <Route element={<Prices />} path="/prices" />
                             <Route element={<Orders />} path="/orders" />
