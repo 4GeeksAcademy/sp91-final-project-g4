@@ -8,7 +8,7 @@ export const Prices= () => {
 		return (
 		  <div>
 			<h1>Tarifas</h1>
-			<p>Aquí se mostrarán las tarifas.</p>
+			<p>Aquí se mostrarán las tarifas tabla duplicar para providers.</p>
 		  </div>
 		);
 	  };

@@ -8,7 +8,7 @@ export const Orders = () => {
 		return (
 		  <div>
 			<h1>Pedidios</h1>
-			<p>Aquí se mostrarán los pedidios .</p>
+			<p>Aquí se mostrarán los pedidios y la localizacion formulario.</p>
 		  </div>
 		);
 	  };
