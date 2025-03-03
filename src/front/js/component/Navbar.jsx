@@ -42,10 +42,10 @@ export const Navbar = () => {
               <Link className="nav-link active" to="/aboutus">Sobre nosotros</Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/registro">Nuestros servicios</Link>
+              <Link className="nav-link" to="/services">Nuestros servicios</Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/iniciosesion">Contacta con nosotros</Link>
+              <Link className="nav-link" to="/contact-us">Contacta con nosotros</Link>
             </li>
 
             {/* Mostrar el dropdown de Cliente solo si el usuario es cliente */}
