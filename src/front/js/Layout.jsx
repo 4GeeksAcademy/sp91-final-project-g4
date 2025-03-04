@@ -3,7 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { UserProvider } from "./store/userContext.js";
 import injectContext from "./store/appContext.js";
 // Custom components
-import { Navbar } from "./component/Navbar.jsx";
+
+import  MainNavbar  from "./component/MainNavbar.jsx";
 import { Footer } from "./component/Footer.jsx";
 import ScrollToTop from "./component/ScrollToTop.jsx";
 import { BackendURL } from "./component/BackendURL.jsx";
@@ -14,11 +15,6 @@ import { Services } from "./pages/Services.jsx";
 import { ContactUs } from "./pages/ContactUs.jsx";
 import { Login } from "./pages/Login.jsx";
 import { SignUp } from "./pages/SignUp.jsx";
-import { Vehicles } from "./pages/Vehicles.jsx";
-import { Prices } from "./pages/Prices.jsx";
-import { Orders } from "./pages/Orders.jsx";
-import { CustomerOrders } from "./pages/CustomerOrders.jsx";
-import { Admin } from "./pages/Admin.jsx";
 
 
 // Create your first component
@@ -33,18 +29,14 @@ const Layout = () => {
             <UserProvider> {/* Envolver todo con UserProvider */}
                 <BrowserRouter>
                     <ScrollToTop>
-                        <Navbar />
+                        < MainNavbar />
                         <Routes>
+                            <Route path="*" element={<h1>Not found!</h1>} />
                             <Route element={<Home />} path="/" />
                             <Route element={<AboutUs />} path="/aboutus" />
                             <Route element={<Services />} path="/services" />
                             <Route element={<ContactUs />} path="/contact-us" />
-                            <Route element={<Vehicles />} path="/vehicles" />
-                            <Route element={<Prices />} path="/prices" />
-                            <Route element={<Orders />} path="/orders" />
-                            <Route element={<CustomerOrders />} path="/customer-orders" />
-                            <Route element={<Admin />} path="/admin" />
-                            <Route path="*" element={<h1>Not found!</h1>} />
+    
                         <Route element={<Login/>} path= "/login" />
                         <Route element={<SignUp/>} path= "/sign-up" />
                         </Routes>
