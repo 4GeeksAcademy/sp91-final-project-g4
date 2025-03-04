@@ -1,15 +1,16 @@
 import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { useUser } from "../store/userContext";
 import Navbar from "react-bootstrap/Navbar";
 import Nav from "react-bootstrap/Nav";
 import NavDropdown from "react-bootstrap/NavDropdown";
 import Offcanvas from "react-bootstrap/Offcanvas";
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
-const MainNavbar = () => {
-  const { user } = useUser();
+
+
+export const MainNavbar = () => {
+
   const { store, actions } = useContext(Context);
   const navigate = useNavigate();
   const handleLogin = () => {
@@ -78,4 +79,4 @@ const MainNavbar = () => {
     </Navbar>
   );
 };
-export default MainNavbar
+
