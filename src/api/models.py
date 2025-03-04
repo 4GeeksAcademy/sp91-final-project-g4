@@ -50,13 +50,12 @@ class Vehicles(db.Model):
 
     def calculate_corrector_cost(self):
         corrector_values = {
-            "Turism": 0.0,
-            "Motorcylce": 0.0,
-            "SUV": 0.2,
-            "4x4": 0.3,
-            "Van": 0.5,
-            "Extra van": 0.7
-        }
+                            "Turism": 0.0,
+                            "Motorcylce": 0.0,
+                            "SUV": 0.2,
+                            "4x4": 0.3,
+                            "Van": 0.5,
+                            "Extra van": 0.7}
         return corrector_values.get(self.vehicle_type, 0.0)
 
     def serialize(self):
@@ -110,6 +109,8 @@ class Order_document(db.Model):
                 "document_url": self.document_url,
                 "created_date": self.created_date,
                 "order_id": self.order_id,}  
+
+
 
 class Providers(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -211,24 +212,25 @@ class Orders(db.Model):
                 "origin_id": self.origin_id,
                 "destiny_id": self.destiny_id,
                 "comment": self.comment}
-    
-"""""
-class Comments(db.Model):
+
+class Contact(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    comment = db.Column(db.String(), unique=False, nullable=True)
-    date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
-    user_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('comment_to', lazy='select'))
-    order_id = db.Column(db.Integer(), db.ForeignKey('orders.id'))
-    order_to = db.relationship('Orders', foreign_keys=[order_id], backref=db.backref('comment_to', lazy='select'))
+    name = db.Column(db.String(120), unique=False, nullable=False)
+    last_name = db.Column(db.String(120), unique=False, nullable=False)
+    phone = db.Column(db.String(50), unique=False, nullable=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    comments = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
-            return f'<Comment: {self.id} - {self.comment}>'
-    
+        return f'<Contact: {self.id} - {self.name} {self.last_name}>'
+
     def serialize(self):
-        return {'id': self.id,
-                'comment': self.comment,
-                'date': self.date,
-                'user_id': self.user_id,
-                'order_id ': self.order_id}
-"""""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "last_name": self.last_name,
+            "phone": self.phone,
+            "email": self.email,
+            "comments": self.comments,
+            "created_at": self.created_at}
