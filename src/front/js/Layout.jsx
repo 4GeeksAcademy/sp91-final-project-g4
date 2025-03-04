@@ -3,15 +3,21 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { UserProvider } from "./store/userContext.js";
 import injectContext from "./store/appContext.js";
 // Custom components
+
 import { MainNavbar } from "./component/MainNavbar.jsx";
 import { Alert } from "./component/Alert.jsx";
+
 import { Footer } from "./component/Footer.jsx";
 import ScrollToTop from "./component/ScrollToTop.jsx";
 import { BackendURL } from "./component/BackendURL.jsx";
 // Custom pages or views
 import { Home } from "./pages/Home.jsx";
+import { AboutUs } from "./pages/AboutUs.jsx";
+import { Services } from "./pages/Services.jsx";
+import { ContactUs } from "./pages/ContactUs.jsx";
 import { Login } from "./pages/Login.jsx";
 import { SignUp } from "./pages/SignUp.jsx";
+
 import { UserProfile } from "./pages/UserProfile.jsx";
 import { Customers } from "./pages/Customers.jsx";
 import { EditCustomer } from "./pages/EditCustomer.jsx";
@@ -53,7 +59,9 @@ const Layout = () => {
                             <Route element={<Vehicles />} path="/admin/vehicles" /> 
                             <Route element={<AddVehicle />} path="/add-vehicle" /> 
                             <Route element={<EditVehicle />} path="admin/vehicles/admin/edit-vehicle" /> 
-
+                            <Route element={<AboutUs />} path="/aboutus" />
+                            <Route element={<Services />} path="/services" />
+                            <Route element={<ContactUs />} path="/contact-us" />
                         </Routes>
                         <Footer />
                     </ScrollToTop>
