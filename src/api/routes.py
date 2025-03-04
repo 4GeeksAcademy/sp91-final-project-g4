@@ -7,7 +7,7 @@ from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import get_jwt
 from datetime import datetime
-from api.models import db, Users, Vehicles, Customers, Order_document, Providers, Locations, Orders
+from api.models import db, Users, Vehicles, Customers, Order_document, Providers, Locations, Orders, Contact
 
 
 api = Blueprint('api', __name__)
@@ -16,7 +16,7 @@ CORS(api)  # Allow CORS requests to this API
 # API Key de OpenRouteService para geolocalización (Debes reemplazarla con una válida)
 ORS_API_KEY = "5b3ce3597851110001cf624838efe49eff8748218b0a9b692f3fb14e"
 
-@api.route("/calculate-distance", methods=["POST"])
+@api.route("/calculate-distances", methods=["POST"])
 @jwt_required()  # Requiere autenticación JWT
 def calculate_distance():
     response_body = {}
@@ -123,40 +123,56 @@ def users():
     response_body['results'] = result
     return response_body, 200
     
-@api.route('/user/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@api.route('/users/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def user(id):
     response_body = {}
     additional_claims = get_jwt()
     role = additional_claims.get("role")
-    if role != 'admin':
-        response_body['message'] = 'Usuario no autorizado'
-        return response_body, 401
-    user = db.session.get(Users, id)   
+    user_id = additional_claims.get("user_id")  # Obtiene el ID del usuario autenticado
+    user = db.session.get(Users, id)
     if not user:
         response_body['message'] = 'User not found'
         return response_body, 404
-    if request.method == 'GET':
-        response_body['message'] = f'Respuesta desde {request.method}'
-        response_body['results'] = user.serialize()
-        return response_body, 200
-    if request.method == 'PUT':
-        data = request.json
-        user.name = data.get("name", user.name)
-        user.last_name = data.get("last_name", user.last_name)
-        user.email = data.get("email", user.email)
-        user.phone = data.get("phone", user.phone)
-        if "is_active" in data:
-            user.is_active = data["is_active"]
-        db.session.commit()
-        response_body['message'] = f'User {id} updated successfully'
-        response_body['results'] = user.serialize()
-        return response_body, 200
-    if request.method == 'DELETE':
-        user.is_active = False  # En lugar de eliminar, solo se desactiva
-        db.session.commit()
-        response_body['message'] = f'User {id} deactivated successfully'
-        return response_body, 200
+    if role == "admin":
+        if request.method == 'GET':
+            response_body['message'] = f'User {id} found'
+            response_body['results'] = user.serialize()
+            return response_body, 200
+        if request.method == 'PUT':
+            data = request.json
+            user.name = data.get("name", user.name)
+            user.last_name = data.get("last_name", user.last_name)
+            user.email = data.get("email", user.email)
+            user.phone = data.get("phone", user.phone)
+            if "is_active" in data:
+                user.is_active = data["is_active"]
+            db.session.commit()
+            response_body['message'] = f'User {id} updated successfully'
+            response_body['results'] = user.serialize()
+            return response_body, 200
+        if request.method == 'DELETE':
+            user.is_active = False  # En lugar de eliminar, solo se desactiva
+            db.session.commit()
+            response_body['message'] = f'User {id} deactivated successfully'
+            return response_body, 200   
+    if role in ["customer", "provider"]:  # CUSTOMER y PROVIDER pueden hacer GET y PUT pero solo sobre su propio usuario
+        if user.id != user_id:
+            return jsonify({"message": "You can only access your own data"}), 403
+        if request.method == 'GET':
+            response_body['message'] = f'User {id} found'
+            response_body['results'] = user.serialize()
+            return response_body, 200
+        if request.method == 'PUT':
+            data = request.json
+            user.name = data.get("name", user.name)
+            user.last_name = data.get("last_name", user.last_name)
+            user.phone = data.get("phone", user.phone)
+            db.session.commit()
+            response_body['message'] = f'User {id} updated successfully'
+            response_body['results'] = user.serialize()
+            return response_body, 200 
+    return jsonify({"message": "Unauthorized"}), 403  # Si no es admin y está tratando de hacer DELETE, denegar acceso
 
 @api.route('/customers', methods=['GET', 'POST'])
 @jwt_required()
@@ -179,55 +195,70 @@ def customers():
         return response_body, 200
     if request.method == 'POST':
         data = request.json
-        new_customer = Customers(company_name=data.get("company_name"),
-                                contact_name=data.get("contact_name"),
-                                phone=data.get("phone"),
-                                address=data.get("address"),
-                                is_active=True)
-        """ user_id=data.get("user_id"), """
+        cust_base_tariff = data.get("cust_base_tariff", 0.0)
+        new_customer = Customers(
+            company_name=data.get("company_name"),
+            contact_name=data.get("contact_name"),
+            phone=data.get("phone"),
+            address=data.get("address"),
+            cust_base_tariff=cust_base_tariff,
+            user_id=data.get("user_id"),
+            is_active=True)
         db.session.add(new_customer)
         db.session.commit()
         response_body['message'] = "Cliente creado exitosamente"
         response_body['results'] = new_customer.serialize()
         return response_body, 201
     
-@api.route('/customer/<int:id>', methods=['GET', 'PUT', 'DELETE']) 
+@api.route('/customers/<int:id>', methods=['GET', 'PUT', 'PATCH', 'DELETE']) 
 @jwt_required()
 def customer(id):
     response_body = {}
     additional_claims = get_jwt()
     role = additional_claims.get("role")
-    user_id = additional_claims.get("user_id")
-    customer = db.session.execute(db.select(Customers).where(Customers.id == id)).scalar()
-    data = {}
-    if customer: 
-        data = customer.serialize()
-    if role == "admin" or data["user_id"] == user_id :
-        if not customer:
-            response_body['message'] = 'Client not found'
-            return response_body, 404
-    if request.method == 'GET':
-        # busco usuario por email del token y verifico que el customer_id del usuario es igual al id del parámetro de la linea 136 y si es administrador también se permite
-        response_body['message'] = f'Respuesta desde {request.method}'
-        response_body['results'] = customer.serialize()
-        return response_body, 200
-    if request.method == 'PUT':
-        data = request.json
-        customer.company_name = data.get("company_name", customer.company_name)
-        customer.contact_name = data.get("contact_name", customer.contact_name)
-        customer.phone = data.get("phone", customer.phone)
-        customer.address = data.get("address", customer.address)
-        if "is_active" in data:
-            customer.is_active = data["is_active"]  # Permitir activar/desactivar cliente
-        db.session.commit()
-        response_body['message'] = f'Customer {id} updated successfully'
-        response_body['results'] = customer.serialize()
-        return response_body, 200
-    if request.method == 'DELETE':
-        customer.is_active = False  # Desactivar en lugar de eliminar
-        db.session.commit()
-        response_body['message'] = f'Customer {id} desactivated successfully'
-        return response_body, 200
+    user_id = additional_claims.get("user_id") 
+    customer = db.session.get(Customers, id)  # Buscar el cliente en la base de datos
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404 
+    if role == "admin":  #  ADMIN puede hacer todo
+        if request.method == 'GET':
+            response_body['message'] = f'Customer {id} found'
+            response_body['results'] = customer.serialize()
+            return jsonify(response_body), 200
+        if request.method in ['PUT', 'PATCH']:
+            data = request.json
+            customer.company_name = data.get("company_name", customer.company_name)
+            customer.contact_name = data.get("contact_name", customer.contact_name)
+            customer.phone = data.get("phone", customer.phone)
+            customer.address = data.get("address", customer.address)
+            if "is_active" in data:
+                customer.is_active = data["is_active"]  # Permitir activar/desactivar
+            db.session.commit()
+            response_body['message'] = f'Customer {id} updated successfully'
+            response_body['results'] = customer.serialize()
+            return jsonify(response_body), 200
+        if request.method == 'DELETE':
+            customer.is_active = False  # En lugar de eliminar, solo se desactiva
+            db.session.commit()
+            response_body['message'] = f'Customer {id} deactivated successfully'
+            return response_body, 200   
+    if role == "customer":  #  CUSTOMERS pueden ver y modificar solo su perfil y sus contactos
+        if customer.user_id != user_id:
+            return jsonify({"message": "Unauthorized access"}), 403  # No puede modificar otro cliente
+        if request.method == 'GET':
+            response_body['message'] = f'Customer {id} found'
+            response_body['results'] = customer.serialize()
+            return jsonify(response_body), 200
+        if request.method in ['PUT', 'PATCH']:
+            data = request.json
+            customer.contact_name = data.get("contact_name", customer.contact_name)
+            customer.phone = data.get("phone", customer.phone)
+            customer.address = data.get("address", customer.address)
+            db.session.commit()
+            response_body['message'] = f'Customer {id} updated successfully'
+            response_body['results'] = customer.serialize()
+            return jsonify(response_body), 200
+    return jsonify({"message": "Unauthorized access"}), 403  #  PROVIDERS no pueden modificar Customers
     
 @api.route('/providers', methods=['GET', 'POST'])
 @jwt_required()
@@ -235,7 +266,7 @@ def providers():
     response_body = {}
     additional_claims = get_jwt()
     role = additional_claims.get("role")
-    if role != 'admin':
+    if role != 'admin':  # Solo los administradores pueden acceder
         response_body['message'] = 'Usuario no autorizado'
         return response_body, 401 
     include_inactive = request.args.get("include_inactive", "false").lower() == "true"
@@ -243,48 +274,44 @@ def providers():
     if not include_inactive:
         query = query.where(Providers.is_active == True)
     if request.method == 'GET':
-        rows = db.session.execute(db.select(Providers)).scalars()
+        rows = db.session.execute(query).scalars()
         result = [row.serialize() for row in rows]
-        response_body['message'] = "List of providers"
+        response_body['message'] = "Listado de proveedores"
         response_body['results'] = result
         return response_body, 200
-
     if request.method == 'POST':
         data = request.json
+        prov_base_tariff = data.get("prov_base_tariff", 0.0)
         new_provider = Providers(
             company_name=data.get("company_name"),
             contact_name=data.get("contact_name"),
             phone=data.get("phone"),
             address=data.get("address"),
-            tariff=data.get("tariff"),
+            prov_base_tariff=prov_base_tariff,
             user_id=data.get("user_id"),
-            is_active=True)  # Proveedores nuevos siempre activos)
+            is_active=True)  # Siempre activos al crearse
         db.session.add(new_provider)
         db.session.commit()
-        response_body['message'] = "Provider created succesfully"
+        response_body['message'] = "Proveedor creado exitosamente"
         response_body['results'] = new_provider.serialize()
         return response_body, 201
 
-@api.route('/provider/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@api.route('/providers/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def provider(id):
     response_body = {}
     additional_claims = get_jwt()
     role = additional_claims.get("role")
     user_id = additional_claims.get("user_id")
-    provider = db.session.execute(db.select(Providers).where(Providers.id == id)).scalar()
+    provider = db.session.get(Providers, id)
     if not provider:
-        response_body['message'] = 'Provider not found'
-        return response_body, 404
-    data_serialize = {}
-    if provider: 
-        data_serialize = provider.serialize()
-    if role == "admin" or data_serialize["user_id"] == user_id :
+        return jsonify({"message": "Proveedor no encontrado"}), 404
+    if role == "admin":  # ADMIN: Puede hacer todo
         if request.method == 'GET':
             response_body['message'] = f'Proveedor {id} encontrado'
             response_body['results'] = provider.serialize()
-            return response_body, 200
-        if request.method == 'PUT':  # PATCH
+            return jsonify(response_body), 200
+        if request.method in ['PUT', 'PATCH']:
             data = request.json
             provider.company_name = data.get("company_name", provider.company_name)
             provider.contact_name = data.get("contact_name", provider.contact_name)
@@ -295,15 +322,29 @@ def provider(id):
             db.session.commit()
             response_body['message'] = f'Proveedor {id} actualizado correctamente'
             response_body['results'] = provider.serialize()
-            return response_body, 200
+            return jsonify(response_body), 200
         if request.method == 'DELETE':
             provider.is_active = False  # Desactivar en lugar de eliminar
             db.session.commit()
             response_body['message'] = f'Proveedor {id} desactivado correctamente'
-            return response_body, 200
-    response_body['message'] = 'Acceso no autorizado'
-    return response_body, 403
-
+            return jsonify(response_body), 200
+    if role == "provider":  #  PROVEEDORES: Pueden modificar solo su propio perfil
+        if provider.user_id != user_id:
+            return jsonify({"message": "Acceso no autorizado"}), 403
+        if request.method == 'GET':
+            response_body['message'] = f'Proveedor {id} encontrado'
+            response_body['results'] = provider.serialize()
+            return jsonify(response_body), 200
+        if request.method in ['PUT', 'PATCH']:
+            data = request.json
+            provider.contact_name = data.get("contact_name", provider.contact_name)
+            provider.phone = data.get("phone", provider.phone)
+            provider.address = data.get("address", provider.address)
+            db.session.commit()
+            response_body['message'] = f'Proveedor {id} actualizado correctamente'
+            response_body['results'] = provider.serialize()
+            return jsonify(response_body), 200   
+    return jsonify({"message": "Acceso no autorizado"}), 403  # CLIENTES NO PUEDEN MODIFICAR PROVEEDORES
 
 @api.route('/vehicles', methods=['GET'])
 def get_vehicles():
@@ -313,6 +354,7 @@ def get_vehicles():
     response_body['message'] = "Lista de vehiculos"
     response_body['results'] = result
     return response_body, 200
+
 @api.route('/vehicles', methods=['POST'])
 @jwt_required()
 def vehicles():
@@ -332,8 +374,18 @@ def vehicles():
     response_body['message'] = " Vehiculo creado exitosamente"
     response_body['results'] = new_vehicle.serialize()
     return response_body, 201
+    data = request.json
+    new_vehicle = Vehicles(
+        brand=data.get("brand"),
+        model=data.get("model"),
+        vehicle_type=data.get("vehicle_type"))
+    db.session.add(new_vehicle)
+    db.session.commit()
+    response_body['message'] = " Vehiculo creado exitosamente"
+    response_body['results'] = new_vehicle.serialize()
+    return response_body, 201
 
-@api.route('/vehicle/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@api.route('/vehicles/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def vehicle(id):
     response_body = {}
@@ -424,7 +476,7 @@ def locations():
         response_body['results'] = result
         return response_body, 200
     
-@api.route('/location/<int:id>', methods=['GET']) # No hace falta proteger GET locations
+@api.route('/locations/<int:id>', methods=['GET']) # No hace falta proteger GET locations
 def location(id):
     response_body = {}
     location = db.session.get(Locations, id)
@@ -462,7 +514,7 @@ def order_documents():
         response_body['results'] = new_document.serialize()
         return jsonify(response_body), 201
 
-@api.route('/order_document/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@api.route('/order_documents/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def order_document_by_id(id):
     response_body = {}
@@ -567,7 +619,7 @@ def orders():
         response_body["final_cost_customer"] = round(final_cost_customer, 2)
         return jsonify(response_body), 201
 
-@api.route('/order/<int:order_id>/add-document', methods=['POST'])
+@api.route('/orders/<int:order_id>/add-document', methods=['POST'])
 # Endpoint para que proveedor o admin adjunten documentos al cambiar estado a init o end
 @jwt_required()
 def add_order_document(order_id):
@@ -592,7 +644,7 @@ def add_order_document(order_id):
     response_body["order_document"] = new_document.serialize()
     return jsonify(response_body), 201
 
-@api.route('/assign-provider/<int:order_id>', methods=['PUT'])
+@api.route('/assign-providers/<int:order_id>', methods=['PUT'])
 # Endpoint para que un admin asigne un proveedor a la orden
 @jwt_required()
 def assign_provider(order_id):
@@ -633,228 +685,91 @@ def assign_provider(order_id):
     response_body["final_cost_provider"] = round(final_cost_provider, 2)
     return jsonify(response_body), 200
 
-@api.route('/order/<int:order_id>', methods=['GET'])
+@api.route('/orders/<int:order_id>', methods=['GET' , 'PUT', 'DELETE'])
 @jwt_required()
 def get_order(order_id):
     response_body = {}
     claims = get_jwt()
     user_role = claims.get("role")
-    user_id = claims.get("user_id")
-
-    # Buscar la orden en la base de datos
-    order = db.session.get(Orders, order_id)
+    user_id = claims.get("user_id")  
+    order = db.session.get(Orders, order_id)  # Buscar la orden en la base de datos
     if not order:
-        return jsonify({"message": "Order not found"}), 404
-
-    # ADMIN puede ver todas las órdenes
-    if user_role == "admin":
-        response_body["message"] = f"Order {order_id} found"
-        response_body["order"] = order.serialize()
-        documents = db.session.execute(db.select(Order_document).where(Order_document.order_id == order.id)).scalars()
-        response_body["documents"] = [doc.serialize() for doc in documents] if documents else []
-        return jsonify(response_body), 200
-
-    # CLIENTE: Verifica si pertenece al cliente de la orden
+        return jsonify({"message": "Order not found"}), 404   
+    if user_role == "admin":  # ADMIN: Puede ver, modificar y cancelar cualquier orden TODO me falta postman PUT DELETE
+        if request.method == 'GET':
+            response_body["message"] = f"Order {order_id} found"
+            response_body["order"] = order.serialize()
+            documents = db.session.execute(db.select(Order_document).where(Order_document.order_id == order.id)).scalars()
+            response_body["documents"] = [doc.serialize() for doc in documents] if documents else []
+            return jsonify(response_body), 200
+        if request.method == 'PUT':  # Modificar orden
+            data = request.json
+            order.status = data.get("status", order.status)
+            order.total_price = data.get("total_price", order.total_price)
+            order.delivery_date = data.get("delivery_date", order.delivery_date)
+            db.session.commit()
+            response_body["message"] = f"Order {order_id} updated successfully"
+            response_body["order"] = order.serialize()
+            return jsonify(response_body), 200
+        if request.method == 'DELETE':  # Cancelar orden
+            order.status = "Canceled"  # En lugar de eliminar, la marcamos como cancelada
+            db.session.commit()
+            return jsonify({"message": f"Order {order_id} has been canceled"}), 200 
     customer = db.session.execute(db.select(Customers).where(Customers.user_id == user_id)).scalar()
+    # CLIENTE: Verifica si pertenece al cliente de la orden
     if customer and order.customer_id == customer.id:
         response_body["message"] = f"Order {order_id} found"
         response_body["order"] = order.serialize()
         documents = db.session.execute(db.select(Order_document).where(Order_document.order_id == order.id)).scalars()
         response_body["documents"] = [doc.serialize() for doc in documents] if documents else []
         return jsonify(response_body), 200
-
-    # PROVEEDOR: Verifica si pertenece al proveedor de la orden
     provider = db.session.execute(db.select(Providers).where(Providers.user_id == user_id)).scalar()
+    # PROVEEDOR: Verifica si pertenece al proveedor de la orden
     if provider and order.provider_id == provider.id:
         response_body["message"] = f"Order {order_id} found"
         response_body["order"] = order.serialize()
         documents = db.session.execute(db.select(Order_document).where(Order_document.order_id == order.id)).scalars()
         response_body["documents"] = [doc.serialize() for doc in documents] if documents else []
-        return jsonify(response_body), 200
+        return jsonify(response_body), 200  
+    return jsonify({"message": "Unauthorized access"}), 403  # Si no cumple ninguna regla, denegar acceso
 
-    # Si no cumple ninguna regla, denegar acceso
-    return jsonify({"message": "Unauthorized access"}), 403
-
-"""""
-if request.method == 'DELETE':
-        if user_role != "admin":
-            return jsonify({"message": "Only admins can delete orders"}), 403
-        order.status_order = "Cancel"
-        db.session.commit()
-        response_body['message'] = f'Order {id} deleted successfully'
-        return jsonify(response_body), 200
-"""""
-""" 
-@api.route('/orders', methods=['GET', 'POST'])
+@api.route("/contacts-admin", methods=["GET"])
 @jwt_required()
-def orders():
+def get_contacts():
+    # Solo admin puede hacer get de todos formularios de contacto
     response_body = {}
-    user_email = get_jwt_identity()  # Usuario autenticado
-    claims = get_jwt()
-    user_role = claims.get("role")  # "customer", "provider", "admin"
-    user_id = claims.get("user_id")  # ID del usuario autenticado
-    if request.method == 'GET':
-        query = db.select(Orders)
-        # Filtrar según el rol
-        if user_role == "customer":
-            query = query.where(Orders.customer_id == user_id)
-        elif user_role == "provider":
-            query = query.where(Orders.provider_id == user_id)
-        orders = db.session.execute(query).scalars()
-        result = [order.serialize() for order in orders]
-        response_body['message'] = "List of orders"
-        response_body['results'] = result
-        return jsonify(response_body), 200
-    if request.method == 'POST':
-        if user_role != "customer":
-            return jsonify({"message": "Only customers can create orders"}), 403
-        data = request.json
-        new_order = Orders(
-            plate=data.get("plate"),
-            distance_km=data.get("distance_km"),
-            estimated_date_end=data.get("estimated_date_end"),
-            base_cost=data.get("base_cost"),
-            corrector_cost=data.get("corrector_cost"),
-            final_cost=data.get("final_cost"),
-            total_customer_price=data.get("total_customer_price"),
-            status_order=data.get("status_order"),
-            order_created_date=data.get("order_created_date"),
-            customer_id=user_id,
-            provider_id=data.get("provider_id"),
-            vehicle_id=data.get("vehicle_id"),
-            origin_id=data.get("origin_id"),
-            destiny_id=data.get("destiny_id"))
-        db.session.add(new_order)
-        db.session.commit()
-        response_body['message'] = "Order created successfully"
-        response_body['results'] = new_order.serialize()
-        return jsonify(response_body), 201
-
-@api.route('/order/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-@jwt_required()
-def order(id):
-    response_body = {}
-    user_email = get_jwt_identity()
     claims = get_jwt()
     user_role = claims.get("role")
-    user_id = claims.get("user_id")
-    order = db.session.get(Orders, id)
-    if not order:
-        response_body['message'] = 'Order not found'
-        return jsonify(response_body), 404
-    if request.method == 'GET':
-        # Validar acceso
-        if user_role == "customer" and order.customer_id != user_id:
-            return jsonify({"message": "Unauthorized access"}), 403
-        if user_role == "provider" and order.provider_id != user_id:
-            return jsonify({"message": "Unauthorized access"}), 403
-        response_body['message'] = f'Order {id} found'
-        response_body['results'] = order.serialize()
-        return jsonify(response_body), 200
-    if request.method == 'PUT':
-        data = request.json
-        # Solo provider puede cambiar el estado del pedido
-        if user_role == "provider":
-            if "status_order" in data:
-                order.status_order = data["status_order"]
-            else:
-                return jsonify({"message": "Providers can only update status"}), 403
-        elif user_role == "admin":
-            # Admin puede modificar todo
-            order.plate = data.get("plate", order.plate)
-            order.distance_km = data.get("distance_km", order.distance_km)
-            order.estimated_date_end = data.get("estimated_date_end", order.estimated_date_end)
-            order.base_cost = data.get("base_cost", order.base_cost)
-            order.corrector_cost = data.get("corrector_cost", order.corrector_cost)
-            order.final_cost = data.get("final_cost", order.final_cost)
-            order.total_customer_price = data.get("total_customer_price", order.total_customer_price)
-            order.status_order = data.get("status_order", order.status_order)
-            order.order_created_date = data.get("order_created_date", order.order_created_date)
-            order.order_acepted_date = data.get("order_acepted_date", order.order_acepted_date)
-            order.in_transit_date = data.get("in_transit_date", order.in_transit_date)
-            order.delivered_date = data.get("delivered_date", order.delivered_date)
-            order.cancel_date = data.get("cancel_date", order.cancel_date)
-            order.customer_id = data.get("customer_id", order.customer_id)
-            order.provider_id = data.get("provider_id", order.provider_id)
-            order.vehicle_id = data.get("vehicle_id", order.vehicle_id)
-            order.origin_id = data.get("origin_id", order.origin_id)
-            order.destiny_id = data.get("destiny_id", order.destiny_id)
-        else:
-            return jsonify({"message": "Unauthorized to modify orders"}), 403
-        db.session.commit()
-        response_body['message'] = f'Order {id} updated successfully'
-        response_body['results'] = order.serialize()
-        return jsonify(response_body), 200
-    if request.method == 'DELETE':
-        if user_role != "admin":
-            return jsonify({"message": "Only admins can delete orders"}), 403
-        db.session.delete(order)
-        db.session.commit()
-        response_body['message'] = f'Order {id} deleted successfully'
-        return jsonify(response_body), 200
-"""
-""" 
-# ✅ ENDPOINT PARA ASIGNAR UN PROVEEDOR A UNA ORDEN
-@api.route('/assign_order/<int:order_id>', methods=['PUT'])
-def assign_order(order_id):
-    data = request.json
-    order = db.session.get(Orders, order_id)
-    if not order:
-        return jsonify({"message": "Order not found"}), 404
-    provider = db.session.get(Providers, data.get("provider_id"))
-    if not provider:
-        return jsonify({"message": "Provider not found"}), 404
-    order.provider_id = provider.id
-    order.status_order = "Order accepted"
-    order.order_acepted_date = datetime.utcnow()
-    order.base_cost = provider.tariff
-    order.final_cost = order.distance_km * provider.tariff * order.corrector_cost
-    db.session.commit()
-    return jsonify({"message": f"Order {order_id} assigned to provider {provider.id}", "results": order.serialize()}), 200
-"""
-"""
-@api.route('/comments', methods=['GET', 'POST'])
-def comments():
-    response_body = {}
-    if request.method == 'GET':
-        rows = db.session.execute(db.select(Comments)).scalars()
-        result = [row.serialize() for row in rows]
-        response_body['message'] = "Lista de comentarios"
-        response_body['results'] = result
-        return response_body, 200
-    if request.method == 'POST':
-        data = request.json
-        new_comment = Comments(
-            comment=data.get("comment"),
-            user_id=data.get("user_id"),
-            order_id=data.get("order_id"))
-        db.session.add(new_comment)
-        db.session.commit()
-        response_body['message'] = "Comentario creado exitosamente"
-        response_body['results'] = new_comment.serialize()
-        return response_body, 201
+    if user_role != "admin":
+        response_body["error"] = "No autorizado"
+        return response_body, 401
+    rows = db.session.execute(db.select(Contact)).scalars()
+    result = [row.serialize() for row in rows]
+    response_body["message"] = "Lista de contactos"
+    response_body["results"] = result
+    return response_body, 200
 
-@api.route('/comment/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-def comment(id):
-    response_body = {}
-    comment = db.session.get(Comments, id)
-    if not comment:
-        response_body['message'] = 'Comentario no encontrado'
-        return response_body, 404
-    if request.method == 'GET':
-        response_body['message'] = f'Comentario {id} encontrado'
-        response_body['results'] = comment.serialize()
-        return response_body, 200
-    if request.method == 'PUT':
-        data = request.json
-        comment.comment = data.get("comment", comment.comment)
+@api.route("/contacts", methods=["POST"])
+def add_contact():
+    # Cualquier usuario puede enviar un formulario de contacto
+    data = request.get_json()
+    name = data.get("name")
+    last_name = data.get("last_name")
+    phone = data.get("phone")
+    email = data.get("email")
+    comments = data.get("comments")
+    if not name or not last_name or not email:
+        return jsonify({"error": "Faltan datos requeridos"}), 400
+    new_contact = Contact(
+                          name=name,
+                          last_name=last_name,
+                          phone=phone,
+                          email=email,
+                          comments=comments)
+    try:
+        db.session.add(new_contact)
         db.session.commit()
-        response_body['message'] = f'Comentario {id} actualizado correctamente'
-        response_body['results'] = comment.serialize()
-        return response_body, 200
-    if request.method == 'DELETE':
-        db.session.delete(comment)
-        db.session.commit()
-        response_body['message'] = f'Comentario {id} eliminado correctamente'
-        return response_body, 200
-        """
+        return jsonify({"message": "Contacto creado exitosamente"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Hubo un error al guardar los datos"}), 500
