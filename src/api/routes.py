@@ -179,13 +179,12 @@ def customers():
         return response_body, 200
     if request.method == 'POST':
         data = request.json
-        new_customer = Customers(
-            company_name=data.get("company_name"),
-            contact_name=data.get("contact_name"),
-            phone=data.get("phone"),
-            address=data.get("address"),
-            user_id=data.get("user_id"),
-            is_active=True)
+        new_customer = Customers(company_name=data.get("company_name"),
+                                contact_name=data.get("contact_name"),
+                                phone=data.get("phone"),
+                                address=data.get("address"),
+                                is_active=True)
+        """ user_id=data.get("user_id"), """
         db.session.add(new_customer)
         db.session.commit()
         response_body['message'] = "Cliente creado exitosamente"
@@ -277,10 +276,10 @@ def provider(id):
     if not provider:
         response_body['message'] = 'Provider not found'
         return response_body, 404
-    data = {}
+    data_serialize = {}
     if provider: 
-        data = provider.serialize()
-    if role == "admin" or data["user_id"] == user_id :
+        data_serialize = provider.serialize()
+    if role == "admin" or data_serialize["user_id"] == user_id :
         if request.method == 'GET':
             response_body['message'] = f'Proveedor {id} encontrado'
             response_body['results'] = provider.serialize()
@@ -293,44 +292,46 @@ def provider(id):
             provider.address = data.get("address", provider.address)
             provider.prov_base_tariff = data.get("prov_base_tariff", provider.prov_base_tariff)
             provider.user_id = data.get("user_id", provider.user_id)
-        if "is_active" in data:
-            provider.is_active = data["is_active"]  # Permitir activar/desactivar proveedor
-        db.session.commit()
-        response_body['message'] = f'Proveedor {id} actualizado correctamente'
-        response_body['results'] = provider.serialize()
-        return response_body, 200
-    if request.method == 'DELETE':
-        provider.is_active = False  # Desactivar en lugar de eliminar
-        db.session.commit()
-        response_body['message'] = f'Proveedor {id} desactivado correctamente'
-        return response_body, 200
+            db.session.commit()
+            response_body['message'] = f'Proveedor {id} actualizado correctamente'
+            response_body['results'] = provider.serialize()
+            return response_body, 200
+        if request.method == 'DELETE':
+            provider.is_active = False  # Desactivar en lugar de eliminar
+            db.session.commit()
+            response_body['message'] = f'Proveedor {id} desactivado correctamente'
+            return response_body, 200
+    response_body['message'] = 'Acceso no autorizado'
+    return response_body, 403
 
-@api.route('/vehicles', methods=['GET', 'POST'])
+
+@api.route('/vehicles', methods=['GET'])
+def get_vehicles():
+    response_body = {}
+    rows = db.session.execute(db.select(Vehicles)).scalars()
+    result = [row.serialize() for row in rows]
+    response_body['message'] = "Lista de vehiculos"
+    response_body['results'] = result
+    return response_body, 200
+@api.route('/vehicles', methods=['POST'])
 @jwt_required()
 def vehicles():
     response_body = {}
     additional_claims = get_jwt()
     role = additional_claims.get("role")
-    if request.method == 'GET':
-        rows = db.session.execute(db.select(Vehicles)).scalars()
-        result = [row.serialize() for row in rows]
-        response_body['message'] = "Lista de vehiculos"
-        response_body['results'] = result
-        return response_body, 200
     if role != 'admin':
         response_body['message'] = 'Usuario no autorizado'
         return response_body, 401
-    if request.method == 'POST':
-        data = request.json
-        new_vehicle = Vehicles(
-            brand=data.get("brand"),
-            model=data.get("model"),
-            vehicle_type=data.get("vehicle_type"))
-        db.session.add(new_vehicle)
-        db.session.commit()
-        response_body['message'] = " Vehiculo creado exitosamente"
-        response_body['results'] = new_vehicle.serialize()
-        return response_body, 201
+    data = request.json
+    new_vehicle = Vehicles(
+        brand=data.get("brand"),
+        model=data.get("model"),
+        vehicle_type=data.get("vehicle_type"))
+    db.session.add(new_vehicle)
+    db.session.commit()
+    response_body['message'] = " Vehiculo creado exitosamente"
+    response_body['results'] = new_vehicle.serialize()
+    return response_body, 201
 
 @api.route('/vehicle/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()

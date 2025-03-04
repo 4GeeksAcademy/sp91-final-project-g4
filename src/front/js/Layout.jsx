@@ -3,7 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { UserProvider } from "./store/userContext.js";
 import injectContext from "./store/appContext.js";
 // Custom components
-import { Navbar } from "./component/Navbar.jsx";
+import { MainNavbar } from "./component/MainNavbar.jsx";
+import { Alert } from "./component/Alert.jsx";
 import { Footer } from "./component/Footer.jsx";
 import ScrollToTop from "./component/ScrollToTop.jsx";
 import { BackendURL } from "./component/BackendURL.jsx";
@@ -11,11 +12,16 @@ import { BackendURL } from "./component/BackendURL.jsx";
 import { Home } from "./pages/Home.jsx";
 import { Login } from "./pages/Login.jsx";
 import { SignUp } from "./pages/SignUp.jsx";
+import { UserProfile } from "./pages/UserProfile.jsx";
+import { Customers } from "./pages/Customers.jsx";
+import { EditCustomer } from "./pages/EditCustomer.jsx";
+import { AddCustomer } from "./pages/AddCustomer.jsx";
+import { Providers } from "./pages/Providers.jsx";
+import { AddProvider } from "./pages/AddProvider.jsx";
+import { EditProvider } from "./pages/EditProvider.jsx";
 import { Vehicles } from "./pages/Vehicles.jsx";
-import { Prices } from "./pages/Prices.jsx";
-import { Orders } from "./pages/Orders.jsx";
-import { CustomerOrders } from "./pages/CustomerOrders.jsx";
-import { Admin } from "./pages/Admin.jsx";
+import { AddVehicle } from "./pages/AddVehicle.jsx";
+import { EditVehicle } from "./pages/EditVehicle.jsx";
 
 
 // Create your first component
@@ -30,17 +36,24 @@ const Layout = () => {
             <UserProvider> {/* Envolver todo con UserProvider */}
                 <BrowserRouter>
                     <ScrollToTop>
-                        <Navbar />
+                        <MainNavbar />
+                        <Alert />
                         <Routes>
-                            <Route element={<Home />} path="/" />
-                            <Route element={<Vehicles />} path="/vehicles" />
-                            <Route element={<Prices />} path="/prices" />
-                            <Route element={<Orders />} path="/orders" />
-                            <Route element={<CustomerOrders />} path="/customer-orders" />
-                            <Route element={<Admin />} path="/admin" />
                             <Route path="*" element={<h1>Not found!</h1>} />
-                        <Route element={<Login/>} path= "/login" />
-                        <Route element={<SignUp/>} path= "/sign-up" />
+                            <Route element={<Home />} path="/" />
+                            <Route element={<Login/>} path= "/login" />
+                            <Route element={<SignUp/>} path= "/sign-up" />
+                            <Route element={<UserProfile/>} path= "/user-profile" />
+                            <Route element={<Customers />} path="admin/customers" />
+                            <Route element={<AddCustomer/>} path= "/add-customer" />
+                            <Route element={<EditCustomer />} path="/admin/customers/admin/edit-customer" /> {/*  ¿Cual sería la URL correcta? */}
+                            <Route element={<Providers />} path="admin/providers" />
+                            <Route element={<AddProvider/>} path= "/add-provider" />
+                            <Route element={<EditProvider />} path="/admin/providers/admin/edit-provider" /> {/*  ¿Cual sería la URL correcta? */}
+                            <Route element={<Vehicles />} path="/admin/vehicles" /> 
+                            <Route element={<AddVehicle />} path="/add-vehicle" /> 
+                            <Route element={<EditVehicle />} path="admin/vehicles/admin/edit-vehicle" /> 
+
                         </Routes>
                         <Footer />
                     </ScrollToTop>
