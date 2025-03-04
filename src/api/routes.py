@@ -374,6 +374,16 @@ def vehicles():
     response_body['message'] = " Vehiculo creado exitosamente"
     response_body['results'] = new_vehicle.serialize()
     return response_body, 201
+    data = request.json
+    new_vehicle = Vehicles(
+        brand=data.get("brand"),
+        model=data.get("model"),
+        vehicle_type=data.get("vehicle_type"))
+    db.session.add(new_vehicle)
+    db.session.commit()
+    response_body['message'] = " Vehiculo creado exitosamente"
+    response_body['results'] = new_vehicle.serialize()
+    return response_body, 201
 
 @api.route('/vehicles/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
