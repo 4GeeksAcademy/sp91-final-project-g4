@@ -109,8 +109,7 @@ class Order_document(db.Model):
                 "document_type": self.document_type,
                 "document_url": self.document_url,
                 "created_date": self.created_date,
-                "order_id": self.order_id,}
-    
+                "order_id": self.order_id,}  
 
 class Providers(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -122,7 +121,6 @@ class Providers(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), unique=True)
     is_active = db.Column(db.Boolean, default=True)
     user_providers_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_providers_to', lazy='select'))
-    
 
     def __repr__(self):
         return f'<User: {self.id} - {self.contact_name}>'
@@ -136,7 +134,6 @@ class Providers(db.Model):
                 "prov_base_tariff": self.prov_base_tariff,
                 "user_id": self.user_id,
                 "is_active": self.is_active}
-
 
 class Locations(db.Model):
     id = db.Column(db.Integer(), primary_key=True)

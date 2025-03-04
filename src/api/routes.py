@@ -129,34 +129,50 @@ def user(id):
     response_body = {}
     additional_claims = get_jwt()
     role = additional_claims.get("role")
-    if role != 'admin':
-        response_body['message'] = 'Usuario no autorizado'
-        return response_body, 401
-    user = db.session.get(Users, id)   
+    user_id = additional_claims.get("user_id")  # Obtiene el ID del usuario autenticado
+    user = db.session.get(Users, id)
     if not user:
         response_body['message'] = 'User not found'
         return response_body, 404
-    if request.method == 'GET':
-        response_body['message'] = f'Respuesta desde {request.method}'
-        response_body['results'] = user.serialize()
-        return response_body, 200
-    if request.method == 'PUT':
-        data = request.json
-        user.name = data.get("name", user.name)
-        user.last_name = data.get("last_name", user.last_name)
-        user.email = data.get("email", user.email)
-        user.phone = data.get("phone", user.phone)
-        if "is_active" in data:
-            user.is_active = data["is_active"]
-        db.session.commit()
-        response_body['message'] = f'User {id} updated successfully'
-        response_body['results'] = user.serialize()
-        return response_body, 200
-    if request.method == 'DELETE':
-        user.is_active = False  # En lugar de eliminar, solo se desactiva
-        db.session.commit()
-        response_body['message'] = f'User {id} deactivated successfully'
-        return response_body, 200
+    if role == "admin":
+        if request.method == 'GET':
+            response_body['message'] = f'User {id} found'
+            response_body['results'] = user.serialize()
+            return response_body, 200
+        if request.method == 'PUT':
+            data = request.json
+            user.name = data.get("name", user.name)
+            user.last_name = data.get("last_name", user.last_name)
+            user.email = data.get("email", user.email)
+            user.phone = data.get("phone", user.phone)
+            if "is_active" in data:
+                user.is_active = data["is_active"]
+            db.session.commit()
+            response_body['message'] = f'User {id} updated successfully'
+            response_body['results'] = user.serialize()
+            return response_body, 200
+        if request.method == 'DELETE':
+            user.is_active = False  # En lugar de eliminar, solo se desactiva
+            db.session.commit()
+            response_body['message'] = f'User {id} deactivated successfully'
+            return response_body, 200   
+    if role in ["customer", "provider"]:  # CUSTOMER y PROVIDER pueden hacer GET y PUT pero solo sobre su propio usuario
+        if user.id != user_id:
+            return jsonify({"message": "You can only access your own data"}), 403
+        if request.method == 'GET':
+            response_body['message'] = f'User {id} found'
+            response_body['results'] = user.serialize()
+            return response_body, 200
+        if request.method == 'PUT':
+            data = request.json
+            user.name = data.get("name", user.name)
+            user.last_name = data.get("last_name", user.last_name)
+            user.phone = data.get("phone", user.phone)
+            db.session.commit()
+            response_body['message'] = f'User {id} updated successfully'
+            response_body['results'] = user.serialize()
+            return response_body, 200 
+    return jsonify({"message": "Unauthorized"}), 403  # Si no es admin y está tratando de hacer DELETE, denegar acceso
 
 @api.route('/customers', methods=['GET', 'POST'])
 @jwt_required()
@@ -179,11 +195,13 @@ def customers():
         return response_body, 200
     if request.method == 'POST':
         data = request.json
+        cust_base_tariff = data.get("cust_base_tariff", 0.0)
         new_customer = Customers(
             company_name=data.get("company_name"),
             contact_name=data.get("contact_name"),
             phone=data.get("phone"),
             address=data.get("address"),
+            cust_base_tariff=cust_base_tariff,
             user_id=data.get("user_id"),
             is_active=True)
         db.session.add(new_customer)
@@ -192,43 +210,55 @@ def customers():
         response_body['results'] = new_customer.serialize()
         return response_body, 201
     
-@api.route('/customer/<int:id>', methods=['GET', 'PUT', 'DELETE']) 
+@api.route('/customer/<int:id>', methods=['GET', 'PUT', 'PATCH', 'DELETE']) 
 @jwt_required()
 def customer(id):
     response_body = {}
     additional_claims = get_jwt()
     role = additional_claims.get("role")
-    user_id = additional_claims.get("user_id")
-    customer = db.session.execute(db.select(Customers).where(Customers.id == id)).scalar()
-    data = {}
-    if customer: 
-        data = customer.serialize()
-    if role == "admin" or data["user_id"] == user_id :
-        if not customer:
-            response_body['message'] = 'Client not found'
-            return response_body, 404
-    if request.method == 'GET':
-        # busco usuario por email del token y verifico que el customer_id del usuario es igual al id del parámetro de la linea 136 y si es administrador también se permite
-        response_body['message'] = f'Respuesta desde {request.method}'
-        response_body['results'] = customer.serialize()
-        return response_body, 200
-    if request.method == 'PUT':
-        data = request.json
-        customer.company_name = data.get("company_name", customer.company_name)
-        customer.contact_name = data.get("contact_name", customer.contact_name)
-        customer.phone = data.get("phone", customer.phone)
-        customer.address = data.get("address", customer.address)
-        if "is_active" in data:
-            customer.is_active = data["is_active"]  # Permitir activar/desactivar cliente
-        db.session.commit()
-        response_body['message'] = f'Customer {id} updated successfully'
-        response_body['results'] = customer.serialize()
-        return response_body, 200
-    if request.method == 'DELETE':
-        customer.is_active = False  # Desactivar en lugar de eliminar
-        db.session.commit()
-        response_body['message'] = f'Customer {id} desactivated successfully'
-        return response_body, 200
+    user_id = additional_claims.get("user_id") 
+    customer = db.session.get(Customers, id)  # Buscar el cliente en la base de datos
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404 
+    if role == "admin":  #  ADMIN puede hacer todo
+        if request.method == 'GET':
+            response_body['message'] = f'Customer {id} found'
+            response_body['results'] = customer.serialize()
+            return jsonify(response_body), 200
+        if request.method in ['PUT', 'PATCH']:
+            data = request.json
+            customer.company_name = data.get("company_name", customer.company_name)
+            customer.contact_name = data.get("contact_name", customer.contact_name)
+            customer.phone = data.get("phone", customer.phone)
+            customer.address = data.get("address", customer.address)
+            if "is_active" in data:
+                customer.is_active = data["is_active"]  # Permitir activar/desactivar
+            db.session.commit()
+            response_body['message'] = f'Customer {id} updated successfully'
+            response_body['results'] = customer.serialize()
+            return jsonify(response_body), 200
+        if request.method == 'DELETE':
+            customer.is_active = False  # En lugar de eliminar, solo se desactiva
+            db.session.commit()
+            response_body['message'] = f'Customer {id} deactivated successfully'
+            return response_body, 200   
+    if role == "customer":  #  CUSTOMERS pueden ver y modificar solo su perfil y sus contactos
+        if customer.user_id != user_id:
+            return jsonify({"message": "Unauthorized access"}), 403  # No puede modificar otro cliente
+        if request.method == 'GET':
+            response_body['message'] = f'Customer {id} found'
+            response_body['results'] = customer.serialize()
+            return jsonify(response_body), 200
+        if request.method in ['PUT', 'PATCH']:
+            data = request.json
+            customer.contact_name = data.get("contact_name", customer.contact_name)
+            customer.phone = data.get("phone", customer.phone)
+            customer.address = data.get("address", customer.address)
+            db.session.commit()
+            response_body['message'] = f'Customer {id} updated successfully'
+            response_body['results'] = customer.serialize()
+            return jsonify(response_body), 200
+    return jsonify({"message": "Unauthorized access"}), 403  #  PROVIDERS no pueden modificar Customers
     
 @api.route('/providers', methods=['GET', 'POST'])
 @jwt_required()
@@ -236,7 +266,7 @@ def providers():
     response_body = {}
     additional_claims = get_jwt()
     role = additional_claims.get("role")
-    if role != 'admin':
+    if role != 'admin':  # Solo los administradores pueden acceder
         response_body['message'] = 'Usuario no autorizado'
         return response_body, 401 
     include_inactive = request.args.get("include_inactive", "false").lower() == "true"
@@ -244,25 +274,29 @@ def providers():
     if not include_inactive:
         query = query.where(Providers.is_active == True)
     if request.method == 'GET':
-        rows = db.session.execute(db.select(Providers)).scalars()
+        rows = db.session.execute(query).scalars()
         result = [row.serialize() for row in rows]
-        response_body['message'] = "List of providers"
+        response_body['message'] = "Listado de proveedores"
         response_body['results'] = result
         return response_body, 200
 
     if request.method == 'POST':
         data = request.json
+        prov_base_tariff = data.get("prov_base_tariff", 0.0)
+
         new_provider = Providers(
             company_name=data.get("company_name"),
             contact_name=data.get("contact_name"),
             phone=data.get("phone"),
             address=data.get("address"),
-            tariff=data.get("tariff"),
+            prov_base_tariff=prov_base_tariff,
             user_id=data.get("user_id"),
-            is_active=True)  # Proveedores nuevos siempre activos)
+            is_active=True)  # Siempre activos al crearse
+
         db.session.add(new_provider)
         db.session.commit()
-        response_body['message'] = "Provider created succesfully"
+
+        response_body['message'] = "Proveedor creado exitosamente"
         response_body['results'] = new_provider.serialize()
         return response_body, 201
 
@@ -273,19 +307,15 @@ def provider(id):
     additional_claims = get_jwt()
     role = additional_claims.get("role")
     user_id = additional_claims.get("user_id")
-    provider = db.session.execute(db.select(Providers).where(Providers.id == id)).scalar()
+    provider = db.session.get(Providers, id)
     if not provider:
-        response_body['message'] = 'Provider not found'
-        return response_body, 404
-    data = {}
-    if provider: 
-        data = provider.serialize()
-    if role == "admin" or data["user_id"] == user_id :
+        return jsonify({"message": "Proveedor no encontrado"}), 404
+    if role == "admin":  # ADMIN: Puede hacer todo
         if request.method == 'GET':
             response_body['message'] = f'Proveedor {id} encontrado'
             response_body['results'] = provider.serialize()
-            return response_body, 200
-        if request.method == 'PUT':  # PATCH
+            return jsonify(response_body), 200
+        if request.method in ['PUT', 'PATCH']:
             data = request.json
             provider.company_name = data.get("company_name", provider.company_name)
             provider.contact_name = data.get("contact_name", provider.contact_name)
@@ -293,17 +323,34 @@ def provider(id):
             provider.address = data.get("address", provider.address)
             provider.prov_base_tariff = data.get("prov_base_tariff", provider.prov_base_tariff)
             provider.user_id = data.get("user_id", provider.user_id)
-        if "is_active" in data:
-            provider.is_active = data["is_active"]  # Permitir activar/desactivar proveedor
-        db.session.commit()
-        response_body['message'] = f'Proveedor {id} actualizado correctamente'
-        response_body['results'] = provider.serialize()
-        return response_body, 200
-    if request.method == 'DELETE':
-        provider.is_active = False  # Desactivar en lugar de eliminar
-        db.session.commit()
-        response_body['message'] = f'Proveedor {id} desactivado correctamente'
-        return response_body, 200
+            if "is_active" in data:
+                provider.is_active = data["is_active"]
+            db.session.commit()
+            response_body['message'] = f'Proveedor {id} actualizado correctamente'
+            response_body['results'] = provider.serialize()
+            return jsonify(response_body), 200
+        if request.method == 'DELETE':
+            provider.is_active = False  # Desactivar en lugar de eliminar
+            db.session.commit()
+            response_body['message'] = f'Proveedor {id} desactivado correctamente'
+            return jsonify(response_body), 200
+    if role == "provider":  #  PROVEEDORES: Pueden modificar solo su propio perfil
+        if provider.user_id != user_id:
+            return jsonify({"message": "Acceso no autorizado"}), 403
+        if request.method == 'GET':
+            response_body['message'] = f'Proveedor {id} encontrado'
+            response_body['results'] = provider.serialize()
+            return jsonify(response_body), 200
+        if request.method in ['PUT', 'PATCH']:
+            data = request.json
+            provider.contact_name = data.get("contact_name", provider.contact_name)
+            provider.phone = data.get("phone", provider.phone)
+            provider.address = data.get("address", provider.address)
+            db.session.commit()
+            response_body['message'] = f'Proveedor {id} actualizado correctamente'
+            response_body['results'] = provider.serialize()
+            return jsonify(response_body), 200   
+    return jsonify({"message": "Acceso no autorizado"}), 403  # CLIENTES NO PUEDEN MODIFICAR PROVEEDORES
 
 @api.route('/vehicles', methods=['GET', 'POST'])
 @jwt_required()
