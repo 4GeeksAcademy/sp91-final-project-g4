@@ -35,8 +35,8 @@ export const MainNavbar = () => {
           <Offcanvas.Body>
             <Nav className="justify-content-end flex-grow-1 pe-3">
               <Nav.Link as={Link} to="/aboutus">Sobre nosotros</Nav.Link>
-              <Nav.Link as={Link} to="/registro">Nuestros servicios</Nav.Link>
-              <Nav.Link as={Link} to="/iniciosesion">Contacta con nosotros</Nav.Link>
+              <Nav.Link as={Link} to="/services">Nuestros servicios</Nav.Link>
+              <Nav.Link as={Link} to="/contact-us">Contacta con nosotros</Nav.Link>
               {store.isLogged && (
                 <NavDropdown title={store.user.name || "Usuario"} align="end">
                   {store.user.role === "customer" && (
