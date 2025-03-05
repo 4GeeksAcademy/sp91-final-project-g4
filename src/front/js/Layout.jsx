@@ -20,6 +20,9 @@ import { SignUp } from "./pages/SignUp.jsx";
 
 import { UserProfile } from "./pages/UserProfile.jsx";
 import { Customers } from "./pages/Customers.jsx";
+import { CustomerDashboard } from "./pages/CustomerDashboard.jsx";
+import { CustomerNewOrder } from "./pages/CustomerNewOrder.jsx";
+import { CustomerOrders } from "./pages/CustomerOrders.jsx";
 import { EditCustomer } from "./pages/EditCustomer.jsx";
 import { AddCustomer } from "./pages/AddCustomer.jsx";
 import { Providers } from "./pages/Providers.jsx";
@@ -51,6 +54,9 @@ const Layout = () => {
                             <Route element={<SignUp/>} path= "/sign-up" />
                             <Route element={<UserProfile/>} path= "/user-profile" />
                             <Route element={<Customers />} path="admin/customers" />
+                            <Route element={<CustomerDashboard />} path="/customer-dashboard" />
+                            <Route element={<CustomerNewOrder />} path="/new-order" />
+                            <Route element={<CustomerOrders />} path="/customer-orders" />
                             <Route element={<AddCustomer/>} path= "/add-customer" />
                             <Route element={<EditCustomer />} path="/admin/customers/admin/edit-customer" /> {/*  ¿Cual sería la URL correcta? */}
                             <Route element={<Providers />} path="admin/providers" />

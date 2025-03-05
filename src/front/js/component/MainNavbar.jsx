@@ -41,9 +41,10 @@ export const MainNavbar = () => {
                 <NavDropdown title={store.user.name || "Usuario"} align="end">
                   {store.user.role === "customer" && (
                     <>
+                      <NavDropdown.Item as={Link} to="/customer-dashboard">Mi pagina cliente</NavDropdown.Item>
                       <NavDropdown.Item as={Link} to="/user-profile">Mi perfil</NavDropdown.Item>
-                      <NavDropdown.Item as={Link} to="/cliente/pedidos">Nuevo pedido</NavDropdown.Item>
-                      <NavDropdown.Item as={Link} to="/cliente/pedidos">Mis pedidos</NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/new-order">Nuevo pedido</NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/customer-orders">Mis pedidos</NavDropdown.Item>
                     </>
                   )}
                   {store.user.role === "provider" && (
