@@ -7,7 +7,7 @@ from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import get_jwt
 from datetime import datetime
-from api.models import db, Users, Vehicles, Customers, Order_document, Providers, Locations, Orders, Contact
+from api.models import db, Users, Vehicles, Customers, OrderDocuments, Providers, Locations, Orders, Contact
 
 
 api = Blueprint('api', __name__)
@@ -58,19 +58,37 @@ def calculate_distance():
         return jsonify({"message": "Error al conectar con OpenRouteService", "error": str(e)}), 500
 
 @api.route("/users", methods=["POST"])
+@jwt_required()
 def signup():
     data = request.json
+    additional_claims = get_jwt()
+    # validar es admin o no - return no autorizado
+    # validar que customer id y provider id que tengan uno de los dos valores o ninguno + dos falsos admin
+    # si customer_id tiene numero verificar que la compañia exista
+    customer_id=data.get("customer_id", None)
+    provider_id=data.get("provider_id", None)
+    # si provider_id tiene numero verificar que la compañia provider exista
+    # sign up solo para admin
     email = data.get("email")
     password = data.get("password")
     name = data.get("name", "")
     last_name = data.get("last_name", "")
-    role = data.get("role", "customer")  # Asignamos por defecto "customer
+    role = data.get("role", "customer")  # Asignamos por defecto "customer - modificar - aqui todos los roles
     if not email or not password:
         return jsonify({"message": "Email and password are required"}), 400
     existing_user = db.session.execute(db.select(Users).where(Users.email == email)).scalar()
     if existing_user:
         return jsonify({"message": "El usuario already exist"}), 409
-    new_user = Users(email=email, name=name, last_name=last_name, phone=data.get("phone", ""), role=role, is_active=True)
+    new_user = Users(email=email, 
+                     name=name, 
+                     last_name=last_name, 
+                     phone=data.get("phone", ""), 
+                     role=role, 
+                     is_active=True)
+    if customer_id: 
+        new_user.customer_id=customer_id
+    if provider_id:
+        new_user.provider_id=provider_id
     new_user.set_password(password)  # Encripta la contraseña
     db.session.add(new_user)
     db.session.commit()
@@ -84,9 +102,11 @@ def login():
     password = data.get("password", None)
     user = db.session.execute(db.select(Users).where(Users.email == email)).scalar()
     if not user or not user.check_password(password):  # Comprobar la contraseña encriptada
-        return jsonify({"message": "User or password incorrect"}), 401
+        response_body["message"] = "User or password incorrect"
+        return response_body, 401
     if not user.is_active:
-        return jsonify({"message": "User is inactive, please contact support"}), 403
+        response_body["message"] = "User is inactive, please contact support"
+        return response_body, 403
     access_token = create_access_token(identity=email, additional_claims={"user_id": user.id, "role": user.role})
     response_body['access_token'] = access_token
     response_body['message'] = 'User logged'
@@ -198,11 +218,10 @@ def customers():
         cust_base_tariff = data.get("cust_base_tariff", 0.0)
         new_customer = Customers(
             company_name=data.get("company_name"),
-            contact_name=data.get("contact_name"),
+            contact_name=data.get("contact_name"),  # dejar en blanco
             phone=data.get("phone"),
             address=data.get("address"),
             cust_base_tariff=cust_base_tariff,
-            user_id=data.get("user_id"),
             is_active=True)
         db.session.add(new_customer)
         db.session.commit()
@@ -220,7 +239,8 @@ def customer(id):
     customer = db.session.get(Customers, id)  # Buscar el cliente en la base de datos
     if not customer:
         return jsonify({"message": "Customer not found"}), 404 
-    if role == "admin":  #  ADMIN puede hacer todo
+    if role == "admin":
+    #  ADMIN puede hacer todo       
         if request.method == 'GET':
             response_body['message'] = f'Customer {id} found'
             response_body['results'] = customer.serialize()
@@ -284,11 +304,10 @@ def providers():
         prov_base_tariff = data.get("prov_base_tariff", 0.0)
         new_provider = Providers(
             company_name=data.get("company_name"),
-            contact_name=data.get("contact_name"),
+            contact_name=data.get("contact_name"),  # dejar en blanco
             phone=data.get("phone"),
             address=data.get("address"),
             prov_base_tariff=prov_base_tariff,
-            user_id=data.get("user_id"),
             is_active=True)  # Siempre activos al crearse
         db.session.add(new_provider)
         db.session.commit()
@@ -298,7 +317,7 @@ def providers():
 
 @api.route('/providers/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
-def provider(id):
+def provider(id): 
     response_body = {}
     additional_claims = get_jwt()
     role = additional_claims.get("role")
@@ -306,7 +325,8 @@ def provider(id):
     provider = db.session.get(Providers, id)
     if not provider:
         return jsonify({"message": "Proveedor no encontrado"}), 404
-    if role == "admin":  # ADMIN: Puede hacer todo
+    if role == "admin":
+    # ADMIN: Puede hacer todo   
         if request.method == 'GET':
             response_body['message'] = f'Proveedor {id} encontrado'
             response_body['results'] = provider.serialize()
@@ -374,16 +394,6 @@ def vehicles():
     response_body['message'] = " Vehiculo creado exitosamente"
     response_body['results'] = new_vehicle.serialize()
     return response_body, 201
-    data = request.json
-    new_vehicle = Vehicles(
-        brand=data.get("brand"),
-        model=data.get("model"),
-        vehicle_type=data.get("vehicle_type"))
-    db.session.add(new_vehicle)
-    db.session.commit()
-    response_body['message'] = " Vehiculo creado exitosamente"
-    response_body['results'] = new_vehicle.serialize()
-    return response_body, 201
 
 @api.route('/vehicles/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
@@ -432,8 +442,7 @@ def vehicles_admin():
             new_vehicle = Vehicles(
                 brand=data.get("brand"),
                 model=data.get("model"),
-                vehicle_type=data.get("vehicle_type"),
-                corrector_cost=data.get("corrector_cost"))  # Se asigna directamente
+                vehicle_type=data.get("vehicle_type"))
             db.session.add(new_vehicle)
             db.session.commit()
         response_body['message'] = " Vehiculo creado exitosamente"
@@ -452,7 +461,6 @@ def locations_admin():
         my_list = request.json  
         for data in my_list:
             new_location = Locations(
-                name=data.get("name"),
                 region=data.get("region"),
                 city=data.get("city"),    
                 postal_code=data.get("postal_code"),  
@@ -489,80 +497,103 @@ def location(id):
         return response_body, 200
     
 @api.route('/order_documents', methods=['GET', 'POST'])
+# GET - Solo Admin puede ver todos los documentos
+# POST - Admin y Provider pueden crear documentos
 @jwt_required() 
 def order_documents():
-     response_body = {}
-     claims = get_jwt()
-     user_role = claims.get("role")
-     if user_role not in ["provider", "admin"]:
-        return jsonify({"message": "Access denied. Only providers and admins can manage order documents"}), 403
-     if request.method == 'GET':
-        rows = db.session.execute(db.select(Order_document)).scalars()
+    response_body = {}
+    claims = get_jwt()
+    user_role = claims.get("role")   
+    if request.method == 'GET':
+        if user_role != "admin":
+            return jsonify({"message": "Access denied. Only admin can view order documents"}), 403
+        rows = db.session.execute(db.select(OrderDocuments)).scalars()
         result = [row.serialize() for row in rows]
-        response_body['message'] = "Documentacion de los pedidos"
+        response_body['message'] = "Documentación de los pedidos"
         response_body['results'] = result
         return jsonify(response_body), 200
-     if request.method == 'POST':
+    if request.method == 'POST':  
+        if user_role not in ["provider", "admin"]:
+            return jsonify({"message": "Access denied. Only providers and admins can manage order documents"}), 403
         data = request.json
-        new_document = Order_document(
-              document_type=data.get("document_type"),
-              document_url=data.get("document_url"),
-              order_id=data.get("order_id"))
+        new_document = OrderDocuments(
+            document_type=data.get("document_type"),
+            document_url=data.get("document_url"),
+            order_id=data.get("order_id"))
         db.session.add(new_document)
         db.session.commit()
-        response_body['message'] = "Documentacion creada exitosamente"
+        response_body['message'] = "Documentación creada exitosamente"
         response_body['results'] = new_document.serialize()
         return jsonify(response_body), 201
 
-@api.route('/order_documents/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@api.route('/order_documents/<int:id>', methods=['GET', 'PUT', 'DELETE'])  # COMPROBAR SI POSTMAN FUNCIONA
+# DELETE - Solo Admin puede eliminar
+# GET - Cualquier usuario autenticado puede ver los documentos
+# PUT - Solo Admin puede modificar
 @jwt_required()
 def order_document_by_id(id):
     response_body = {}
     claims = get_jwt()
     user_role = claims.get("role")
-    if user_role not in ["provider", "admin"]:
-        return jsonify({"message": "Access denied. Only providers and admins can manage order documents"}), 403
-    order_document = db.session.get(Order_document, id)
+    order_document = db.session.get(OrderDocuments, id)  # Buscar el documento por ID
     if not order_document:
-        response_body['message'] = 'Order_document not found'
-        return jsonify(response_body), 404
+        response_body['message'] = 'Order document not found'
+        return jsonify(response_body), 404   
     if request.method == 'GET':
-        response_body['message'] = f'Respuesta desde {request.method}'
+        if user_role not in ["admin", "customer", "provider"]:
+            return jsonify({"message": "Access denied."}), 403
+        response_body['message'] = f'Document {id} retrieved successfully'
         response_body['results'] = order_document.serialize()
-        return jsonify(response_body), 200
+        return jsonify(response_body), 200  
     if request.method == 'PUT':
+        if user_role != "admin":
+            return jsonify({"message": "Access denied. Only admin can update documents."}), 403
         data = request.json
         order_document.document_type = data.get("document_type", order_document.document_type)
         order_document.document_url = data.get("document_url", order_document.document_url)
         db.session.commit()
-        response_body['message'] = f'Documento {id} actualizado correctamente'
+        response_body['message'] = f'Document {id} updated successfully'
         response_body['results'] = order_document.serialize()
-        return response_body, 200
+        return jsonify(response_body), 200
     if request.method == 'DELETE':
+        if user_role != "admin":
+            return jsonify({"message": "Access denied. Only admin can delete documents."}), 403
         db.session.delete(order_document)
         db.session.commit()
-        response_body['message'] = f'Documento {id} eliminado correctamente'
-        return response_body, 200 
+        response_body['message'] = f'Document {id} deleted successfully'
+        return jsonify(response_body), 200
     
 @api.route('/orders', methods=['GET', 'POST'])
+# admin ve lista de todas las ordenes
+# customer ve lista de las suyas
+# provider ve lista de las suyas
 @jwt_required()
 def orders():
     response_body = {}
     user_email = get_jwt_identity()
     claims = get_jwt()
     user_role = claims.get("role")
-    user_id = claims.get("user_id")  
-    if request.method == 'GET':  # GET: Obtener órdenes según el rol
+    user_id = claims.get("user_id")
+    if request.method == 'GET':  # GET: Obtener órdenes según el rol del usuario     
         query = db.select(Orders)
-        if user_role == "customer":
-            query = query.where(Orders.customer_id == user_id)
-        elif user_role == "provider":
-            query = query.where(Orders.provider_id == user_id)
+        if user_role == "customer":  # Solo ve sus propias órdenes          
+            customer = db.session.execute(
+                db.select(Customers).where(Customers.user_id == user_id)).scalar()
+            if not customer:
+                return jsonify({"message": "Customer not found"}), 404
+            query = query.where(Orders.customer_id == customer.id)
+        elif user_role == "provider":  # Solo ve sus órdenes asignadas          
+            provider = db.session.execute(
+                db.select(Providers).where(Providers.user_id == user_id)).scalar()
+            if not provider:
+                return jsonify({"message": "Provider not found"}), 404
+            query = query.where(Orders.provider_id == provider.id)
+        # Admin puede ver todas las órdenes
         orders = db.session.execute(query).scalars()
         result = [order.serialize() for order in orders]
         response_body['message'] = "List of orders"
         response_body['results'] = result
-        return jsonify(response_body), 200   
+        return jsonify(response_body), 200  
     if request.method == 'POST':  # POST: Solo clientes y administradores pueden crear órdenes sin proveedor asignado
         if user_role not in ["customer", "admin"]:
             return jsonify({"message": "Only customers and admins can create orders"}), 403
@@ -610,10 +641,11 @@ def orders():
             customer_id=data.get("customer_id"),
             vehicle_id=vehicle_id,
             origin_id=origin_id,
-            destiny_id=destination_id)
+            destiny_id=destination_id,
+            comment=data.get("comment"))
         db.session.add(new_order)
         db.session.commit()     
-        response_body["message"] = "Order created successfully (without provider assigned)"   #  Respuesta con detalles de la orden creada
+        response_body["message"] = "Order created successfully (without provider assigned)"   # Respuesta con detalles de la orden creada
         response_body["order"] = new_order.serialize()
         response_body["distance_km"] = distance_km
         response_body["final_cost_customer"] = round(final_cost_customer, 2)
@@ -634,7 +666,7 @@ def add_order_document(order_id):
     if order.status_order not in ["init", "end"]:  # Verificar que el estado de la orden es "init" o "end"
         return jsonify({"message": "Documents can only be added when order status is 'init' or 'end'"}), 400
     data = request.json
-    new_document = Order_document(
+    new_document = OrderDocuments(
         document_type=data.get("document_type"),
         document_url=data.get("document_url"),
         order_id=order.id)
@@ -685,7 +717,7 @@ def assign_provider(order_id):
     response_body["final_cost_provider"] = round(final_cost_provider, 2)
     return jsonify(response_body), 200
 
-@api.route('/orders/<int:order_id>', methods=['GET' , 'PUT', 'DELETE'])
+@api.route('/orders/<int:order_id>', methods=['GET' , 'PUT', 'DELETE'])  # TODO me falta postman PUT DELETE - MANEJAR ESTADOS
 @jwt_required()
 def get_order(order_id):
     response_body = {}
@@ -695,11 +727,11 @@ def get_order(order_id):
     order = db.session.get(Orders, order_id)  # Buscar la orden en la base de datos
     if not order:
         return jsonify({"message": "Order not found"}), 404   
-    if user_role == "admin":  # ADMIN: Puede ver, modificar y cancelar cualquier orden TODO me falta postman PUT DELETE
+    if user_role == "admin":  # ADMIN: Puede ver, modificar y cancelar cualquier orden
         if request.method == 'GET':
             response_body["message"] = f"Order {order_id} found"
             response_body["order"] = order.serialize()
-            documents = db.session.execute(db.select(Order_document).where(Order_document.order_id == order.id)).scalars()
+            documents = db.session.execute(db.select(OrderDocuments).where(OrderDocuments.order_id == order.id)).scalars()
             response_body["documents"] = [doc.serialize() for doc in documents] if documents else []
             return jsonify(response_body), 200
         if request.method == 'PUT':  # Modificar orden
@@ -720,7 +752,7 @@ def get_order(order_id):
     if customer and order.customer_id == customer.id:
         response_body["message"] = f"Order {order_id} found"
         response_body["order"] = order.serialize()
-        documents = db.session.execute(db.select(Order_document).where(Order_document.order_id == order.id)).scalars()
+        documents = db.session.execute(db.select(OrderDocuments).where(OrderDocuments.order_id == order.id)).scalars()
         response_body["documents"] = [doc.serialize() for doc in documents] if documents else []
         return jsonify(response_body), 200
     provider = db.session.execute(db.select(Providers).where(Providers.user_id == user_id)).scalar()
@@ -728,15 +760,15 @@ def get_order(order_id):
     if provider and order.provider_id == provider.id:
         response_body["message"] = f"Order {order_id} found"
         response_body["order"] = order.serialize()
-        documents = db.session.execute(db.select(Order_document).where(Order_document.order_id == order.id)).scalars()
+        documents = db.session.execute(db.select(OrderDocuments).where(OrderDocuments.order_id == order.id)).scalars()
         response_body["documents"] = [doc.serialize() for doc in documents] if documents else []
         return jsonify(response_body), 200  
     return jsonify({"message": "Unauthorized access"}), 403  # Si no cumple ninguna regla, denegar acceso
 
 @api.route("/contacts-admin", methods=["GET"])
+# Solo admin puede hacer get de todos formularios de contacto
 @jwt_required()
 def get_contacts():
-    # Solo admin puede hacer get de todos formularios de contacto
     response_body = {}
     claims = get_jwt()
     user_role = claims.get("role")
@@ -750,8 +782,8 @@ def get_contacts():
     return response_body, 200
 
 @api.route("/contacts", methods=["POST"])
+# Cualquier usuario puede enviar un formulario de contacto
 def add_contact():
-    # Cualquier usuario puede enviar un formulario de contacto
     data = request.get_json()
     name = data.get("name")
     last_name = data.get("last_name")
@@ -772,4 +804,4 @@ def add_contact():
         return jsonify({"message": "Contacto creado exitosamente"}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "Hubo un error al guardar los datos"}), 500
+        return jsonify({"error": "Contacto ya registrado"}), 500
