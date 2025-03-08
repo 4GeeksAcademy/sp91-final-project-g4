@@ -131,6 +131,25 @@ const getState = ({ getStore, getActions, setStore }) => {
 				const data = await response.json();
 				setStore({ customers: data.results });
 			},
+			getCustomerById: async (customerId) => { /*descomentar con nuevo back*/
+				/*const uri = `${process.env.BACKEND_URL}/api/customers/${customerId}`;
+				const options = {
+					method: 'GET',
+					headers: {
+						Authorization: `Bearer ${localStorage.getItem('token')}`
+					}
+				};
+
+				const response = await fetch(uri, options);
+				if (!response.ok) {
+					console.log('Error', response.status, response.statusText);
+					return;
+				}
+
+				const data = await response.json();*/
+
+				setStore({ customer: dataTemp });  // Guardamos los datos del customer
+			},
 			addCustomer: async (dataToSend) => {
 				const uri =`${process.env.BACKEND_URL}/api/customers`
 				const options = {
@@ -191,6 +210,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 						Authorization: `Bearer ${localStorage.getItem('token')}`
 					}
 				};
+				
 				const response = await fetch(uri, options);
 				if (!response.ok) {
 					console.log("error:", response.status, response.statusText);
@@ -198,6 +218,25 @@ const getState = ({ getStore, getActions, setStore }) => {
 				const data = await response.json();
 				setStore({ providers: data.results });
 			},
+			getProviderById: async (providerId) => { /*descomentar con nuevo back*/
+				/*const uri = `${process.env.BACKEND_URL}/api/provider/${providerId}`;
+				const options = {
+					method: 'GET',
+					headers: {
+						Authorization: `Bearer ${localStorage.getItem('token')}`
+					}
+				};
+
+				const response = await fetch(uri, options);
+				if (!response.ok) {
+					console.log('Error', response.status, response.statusText);
+					return;
+				}
+
+				const data = await response.json();*/
+				setStore({ provider: dataTemp });  // Guardamos los datos del provider
+			},
+
 			addProvider: async (dataToSend) => {
 				const uri =`${process.env.BACKEND_URL}/api/providers`
 				const options = {
