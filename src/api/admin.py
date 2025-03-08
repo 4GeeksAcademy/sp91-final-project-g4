@@ -4,7 +4,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin.form import SecureForm
 from wtforms import PasswordField
 from werkzeug.security import generate_password_hash
-from .models import db, Users, Vehicles, Customers, Order_document, Providers, Locations, Orders, Contact
+from .models import db, Users, Vehicles, Customers, OrderDocuments, Providers, Locations, Orders, Contact
 
 # Clase personalizada para Users en Flask-Admin
 class UsersAdmin(ModelView):
@@ -26,7 +26,7 @@ def setup_admin(app):
     admin.add_view(UsersAdmin(Users, db.session))  # Usa la clase personalizada
     admin.add_view(ModelView(Vehicles, db.session))
     admin.add_view(ModelView(Customers, db.session))
-    admin.add_view(ModelView(Order_document, db.session))
+    admin.add_view(ModelView(OrderDocuments, db.session))
     admin.add_view(ModelView(Providers, db.session))
     admin.add_view(ModelView(Locations, db.session))
     admin.add_view(ModelView(Orders, db.session))
