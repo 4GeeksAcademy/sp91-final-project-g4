@@ -25,9 +25,6 @@ export const Login = () => {
         }
     }
 
-    useEffect(() => {
-        actions.setAlert({text:'', background:'primary', true:false});
-    }, [])
 
 
 

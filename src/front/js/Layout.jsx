@@ -6,6 +6,7 @@ import injectContext from "./store/appContext.js";
 
 import { MainNavbar } from "./component/MainNavbar.jsx";
 import { Alert } from "./component/Alert.jsx";
+import 'react-toastify/dist/ReactToastify.css';
 import { Footer } from "./component/Footer.jsx";
 import ScrollToTop from "./component/ScrollToTop.jsx";
 import { BackendURL } from "./component/BackendURL.jsx";
@@ -33,6 +34,14 @@ import { EditProvider } from "./pages/EditProvider.jsx";
 import { Vehicles } from "./pages/Vehicles.jsx";
 import { AddVehicle } from "./pages/AddVehicle.jsx";
 import { EditVehicle } from "./pages/EditVehicle.jsx";
+import { OrderCustomerDetail } from "./pages/OrderCustomerDetail.jsx";
+import { OrderCustomer } from "./pages/OrderCustomer.jsx";
+import { OrderProvider } from "./pages/OrderProvider.jsx";
+import { OrderProviderDetail } from "./pages/OrderProviderDetail.jsx";
+import { EditProfile } from "./pages/EditProfile.jsx";
+import { ToastContainer } from "react-toastify";
+
+
 
 
 // Create your first component
@@ -48,32 +57,48 @@ const Layout = () => {
                 <BrowserRouter>
                     <ScrollToTop>
                         <MainNavbar />
-                        <Alert />
+                        <ToastContainer
+                            position="top-center"
+                            autoClose={5000}
+                            hideProgressBar={false}
+                            newestOnTop={false}
+                            closeOnClick={false}
+                            rtl={false}
+                            pauseOnFocusLoss
+                            draggable
+                            pauseOnHover
+                            theme="colored"
+                        />
                         <Routes>
                             <Route path="*" element={<h1>Not found!</h1>} />
                             <Route element={<Home />} path="/" />
-                            <Route element={<Login/>} path= "/login" />
-                            <Route element={<SignUp/>} path= "/sign-up" />
-                            <Route element={<UserProfile/>} path= "/user-profile" />
-                            <Route element={<Customers />} path="admin/customers" />
+                            <Route element={<Login />} path="/login" />
+                            <Route element={<SignUp />} path="/sign-up" />
+                            <Route element={<UserProfile />} path="/user-profile" />
+                            <Route element={<EditProfile />} path="/edit-user" />
+                            <Route element={<Customers />} path="/admin/customers" />
                             <Route element={<CustomerDashboard />} path="/customer-dashboard" />
                             <Route element={<CustomerProfile />} path="/customer-profile" />
                             <Route element={<CustomerNewOrder />} path="/new-order" />
                             <Route element={<CustomerOrders />} path="/customer-orders" />
-                            <Route element={<AddCustomer/>} path= "/add-customer" />
+                            <Route element={<AddCustomer />} path="/add-customer" />
                             <Route element={<EditCustomer />} path="/admin/customers/admin/edit-customer" /> {/*  ¿Cual sería la URL correcta? */}
-                            <Route element={<Providers />} path="admin/providers" />
+                            <Route element={<Providers />} path="/admin/providers" />
                             <Route element={<ProviderDashboard />} path="provider-dashboard" />
                             <Route element={<ProviderOrders />} path="provider-orders" />
                             <Route element={<ProviderProfile />} path="provider-profile" />
-                            <Route element={<AddProvider/>} path= "/add-provider" />
+                            <Route element={<AddProvider />} path="/add-provider" />
                             <Route element={<EditProvider />} path="/admin/providers/admin/edit-provider" /> {/*  ¿Cual sería la URL correcta? */}
-                            <Route element={<Vehicles />} path="/admin/vehicles" /> 
-                            <Route element={<AddVehicle />} path="/add-vehicle" /> 
-                            <Route element={<EditVehicle />} path="admin/vehicles/admin/edit-vehicle" /> 
+                            <Route element={<Vehicles />} path="/admin/vehicles" />
+                            <Route element={<AddVehicle />} path="/add-vehicle" />
+                            <Route element={<EditVehicle />} path="/admin/vehicles/admin/edit-vehicle" />
                             <Route element={<AboutUs />} path="/aboutus" />
                             <Route element={<Services />} path="/services" />
                             <Route element={<ContactUs />} path="/contact-us" />
+                            <Route element={<OrderCustomer />} path="/admin/orders-customers" />
+                            <Route element={<OrderCustomerDetail />} path="/admin/order-customer-detail" />
+                            <Route element={<OrderProvider />} path="/admin/orders-providers" />
+                            <Route element={<OrderProviderDetail />} path="/admin/order-provider-detail" />
                         </Routes>
                         <Footer />
                     </ScrollToTop>

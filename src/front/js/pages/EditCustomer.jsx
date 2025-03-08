@@ -28,9 +28,6 @@ export const EditCustomer = () => {
         navigate("/admin/customers");
     }
 
-    useEffect(() => {
-        actions.setAlert({text:'', background:'primary', visible:false});
-    }, [])
 
     return (
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>

@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
@@ -13,6 +14,11 @@ const getState = ({ getStore, getActions, setStore }) => {
 			currentProvider:{},
 			vehicles: [],
 			currentVehicle: {},
+			orders: [],
+			currentOrder: {},
+			locations: [],
+			currentLocation: {},
+		
 
 		},
 		actions: {
@@ -23,6 +29,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 			setCurrentCustomer: (customer) => { setStore({ currentCustomer: customer}) },
 			setCurrentProvider: (provider) => { setStore({ currentProvider: provider}) },
 			setCurrentVehicle: (vehicle) => { setStore({ currentVehicle: vehicle}) },
+			setCurrentOrder: (order) => { setStore({ currentOrder: order}) },
+			setCurrentLocation: (order) => { setStore({ currentLocation: location}) },
 			
 
 			exampleFunction: () => {getActions().changeColor(0, "green");},
@@ -52,12 +60,12 @@ const getState = ({ getStore, getActions, setStore }) => {
 				if (!response.ok) {
 					console.log('error:', response.status, response.statusText)
 					if(response.status == 401){
-						setStore({alert: {text: 'Email o contraseña no válido', background: 'danger', visible: true}})					
+						toast.error("Email o contraseña incorrecto")					
 					}
 					return
 				}
 				const data = await response.json()
-				console.log(data);
+				toast.success("Usuario logeado correctamente")
 				localStorage.setItem('token', data.access_token)
 				setStore({
 					isLogged: true,
@@ -115,6 +123,25 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 				const data = await response.json()
 				console.log(data);
+				setStore({ user: data.results });
+			},
+			editUser: async (userId, dataToSend) =>{
+				const uri= `${process.env.BACKEND_URL}/api/users/${userId}`;
+				const options = {
+					method: "PUT",
+					headers: {
+						Authorization: `Bearer ${localStorage.getItem('token')}`,
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify(dataToSend)
+				}
+				const response = await fetch(uri, options);
+				if (!response.ok) {
+					return;
+				}
+				setStore({alert: {text: 'Usuario editado correctamente ', background: 'success', visible: true}})
+
+				getActions().getUser(userId)
 			},
 			getCustomers: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/customers`;
@@ -165,9 +192,11 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log('error:', response.status, response.statusText)
 					return  
 				}
+				setStore({alert: {text: 'Cliente agregado correctamente ', background: 'success', visible: true}})
+				getActions().getCustomers()
 			},
 			deleteCustomer: async (customerId) => {		
-				const uri = `${process.env.BACKEND_URL}/api/customer/${customerId}`;
+				const uri = `${process.env.BACKEND_URL}/api/customers/${customerId}`;
 				const options = {
 					method: "DELETE",
 					headers: {
@@ -177,15 +206,13 @@ const getState = ({ getStore, getActions, setStore }) => {
 				const response = await fetch(uri, options);
 				if (!response.ok) {
 					console.log('error:', response.status, response.statusText)
-					if(response.status == 401){
-											
-					}
 					return
 				}
+				setStore({alert: {text: 'Cliente desactivado correctamente ', background: 'success', visible: true}})
 				getActions().getCustomers();
 			},
 			editCustomer: async (customerId, dataToSend) =>{
-				const uri= `${process.env.BACKEND_URL}/api/customer/${customerId}`;
+				const uri= `${process.env.BACKEND_URL}/api/customers/${customerId}`;
 				const options = {
 					method: "PUT",
 					headers: {
@@ -242,7 +269,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 				const options = {
 					method: "POST",
 					headers: {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${localStorage.getItem('token')}`	
 					},
 					body: JSON.stringify(dataToSend)
 				}
@@ -251,9 +279,10 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log('error:', response.status, response.statusText)
 					return  
 				}
+				getActions().getProviders()
 			},
 			deleteProviders: async (providerId ) => {		
-				const uri = `${process.env.BACKEND_URL}/api/provider/${providerId}`;
+				const uri = `${process.env.BACKEND_URL}/api/providers/${providerId}`;
 				const options = {
 					method: "DELETE",
 					headers: {
@@ -265,13 +294,11 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("error", response.status, response.statusText);
 					return
 				}
-				const data = await response.json()
-				console.log(data);
-				
+				setStore({alert: {text: 'Proveedor desactivado correctamente ', background: 'success', visible: true}})
 				getActions().getProviders();
 			},
 			editProvider: async (providerId, dataToSend) =>{
-				const uri= `${process.env.BACKEND_URL}/api/provider/${providerId}`;
+				const uri= `${process.env.BACKEND_URL}/api/providers/${providerId}`;
 				const options = {
 					method: "PUT",
 					headers: {
@@ -284,13 +311,13 @@ const getState = ({ getStore, getActions, setStore }) => {
 				if (!response.ok) {
 					return;
 				}
+				setStore({alert: {text: 'Proveedor editado correctamente ', background: 'success', visible: true}})
 				getActions().getProviders()
 			},
 			getVehicles: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/vehicles`;
 				const options = {
 					method: "GET",
-					// TODO: Quitar protección del GET en routes
 					headers: {
 						Authorization: `Bearer ${localStorage.getItem('token')}`
 					}
@@ -307,7 +334,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 				const options = {
 					method: "POST",
 					headers: {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${localStorage.getItem('token')}`
 					},
 					body: JSON.stringify(dataToSend)
 				}
@@ -316,9 +344,11 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log('error:', response.status, response.statusText)
 					return  
 				}
+				setStore({alert: {text: 'Vehículo agregado correctamente ', background: 'success', visible: true}})
+				getActions().getVehicles()
 			},
 			deleteVehicle: async (vehicleId) => {		
-				const uri = `${process.env.BACKEND_URL}/api/vehicle/${vehicleId}`;
+				const uri = `${process.env.BACKEND_URL}/api/vehicles/${vehicleId}`;
 				const options = {
 					method: "DELETE",
 					headers: {
@@ -330,23 +360,70 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("error", response.status, response.statusText);
 					return
 				}
+				setStore({alert: {text: 'Vehículo eliminado correctamente ', background: 'success', visible: true}})
 				getActions().getVehicles();
 			},
-			editVehicle: async (providerId) =>{
-				const uri= `${process.env.BACKEND_URL}/api/vehicle/${vehicleId}`;
+			editVehicle: async (vehicleId, dataToSend) =>{
+				const uri= `${process.env.BACKEND_URL}/api/vehicles/${vehicleId}`;
 				const options = {
 					method: "PUT",
 					headers: {
 						"Content-Type": "application/json",
 						Authorization: `Bearer ${localStorage.getItem('token')}`
 					},
-					body: JSON.stringify(providerId)
+					body: JSON.stringify(dataToSend)
 				}
 				const response = await fetch(uri, options);
 				if (!response.ok) {
 					return;
 				}
+				setStore({alert: {text: 'Vehículo editado correctamente ', background: 'success', visible: true}})
 				getActions().getVehicles()
+			},
+			getOrders: async () => {
+				const uri = `${process.env.BACKEND_URL}/api/orders`;
+				const options = {
+					method: "GET",
+					headers: {
+						Authorization: `Bearer ${localStorage.getItem('token')}`
+					}
+				};
+				const response = await fetch(uri, options);
+				if (!response.ok) {
+					console.log("error:", response.status, response.statusText);
+				}
+				const data = await response.json();
+				setStore({ orders: data.results });
+			},
+			getLocations: async () => {
+				const uri = `${process.env.BACKEND_URL}/api/locations`;
+				const options = {
+					method: "GET",
+					headers: {
+						Authorization: `Bearer ${localStorage.getItem('token')}`
+					}
+				};
+				const response = await fetch(uri, options);
+				if (!response.ok) {
+					console.log("error:", response.status, response.statusText);
+				}
+				const data = await response.json();
+				setStore({ locations: data.results });
+			},
+			addOrder: async (dataToSend) => {
+				const uri =`${process.env.BACKEND_URL}/api/orders`
+				const options = {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify(dataToSend)
+				}
+				const response = await fetch(uri, options);
+				if (!response.ok) {
+					console.log('error:', response.status, response.statusText)
+					return  
+				}
 			},
 			
 		}

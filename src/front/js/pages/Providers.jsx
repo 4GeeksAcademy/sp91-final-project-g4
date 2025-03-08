@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-
+import { Alert } from "../component/Alert.jsx";
 
 
 export const Providers = () => {
@@ -11,6 +11,7 @@ export const Providers = () => {
 
     const handleDelete = async (providerId) => {
         actions.deleteProviders(providerId)
+        actions.setAlert({text: 'Proveedor desactivado correctamente', background: 'primary', visible: true})
     }
 
     const handleEdit = async (provider) => {

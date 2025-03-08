@@ -61,8 +61,8 @@ export const MainNavbar = () => {
                       <NavDropdown.Item as={Link} to="/admin/customers">Clientes</NavDropdown.Item>
                       <NavDropdown.Item as={Link} to="/admin/providers">Proveedores</NavDropdown.Item>
                       <NavDropdown.Item as={Link} to="/admin/vehicles">Vehículos</NavDropdown.Item>
-                      <NavDropdown.Item as={Link} to="/admin/order-customers">Pedidos de clientes</NavDropdown.Item>
-                      <NavDropdown.Item as={Link} to="/admin/order-providers">Traslados de proveedores</NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/admin/orders-customers">Pedidos de clientes</NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/admin/orders-providers">Traslados de proveedores</NavDropdown.Item>
                     </>
                   )}
                   <NavDropdown.Divider />

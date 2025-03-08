@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-
+import { Alert } from "../component/Alert.jsx";
 
 
 export const Customers = () => {
@@ -11,6 +11,8 @@ export const Customers = () => {
 
     const handleDelete = async (customerId) => {
         actions.deleteCustomer(customerId)
+        actions.setAlert({text: 'Cliente desactivado correctamente', background: 'primary', visible: true})
+
     }
 
     const handleEdit = async (customer) => {
@@ -41,7 +43,9 @@ export const Customers = () => {
                                 <th scope="col">Dirección</th>
                                 <th scope="col">Tarifa aplicada</th>
                                 <th scope="col">Activo</th>
-                                <th scope="col"></th>
+                                <th scope="col">Editar</th>
+                                <th scope="col">Editar usuario</th>
+                                <th scope="col">Añadir usuario</th>
                                 <th scope="col"></th>
                             </tr>
                         </thead>
@@ -53,10 +57,16 @@ export const Customers = () => {
                                 <td>{item.phone}</td>
                                 <td>{item.address}</td>
                                 <td>{item.cust_base_tariff}</td>
+                                <td>{item.cust_base_tariff}</td>
                                 <td>{item.is_active? "Activo": "Inactivo"}</td>
                                 <td>
                                     <button onClick={() => handleEdit(item)} type="button" className="btn btn-secondary me-4">
                                         <i className="fas fa-edit "></i>
+                                    </button>
+                                </td>
+                                <td>
+                                    <button onClick={() => handleAddCustomer(item.id)} type="button" className="btn btn-danger" >
+                                    <i className="fa-solid fa-plus"></i>
                                     </button>
                                 </td>
                                 <td>
