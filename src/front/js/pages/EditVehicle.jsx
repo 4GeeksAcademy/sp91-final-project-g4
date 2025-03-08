@@ -1,7 +1,7 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Context } from "../store/appContext.js";
 import { Link, useNavigate } from "react-router-dom";
-
+import { Alert } from "../component/Alert.jsx";
 
 
 export const EditVehicle = () => {
@@ -12,20 +12,22 @@ export const EditVehicle = () => {
     const [ brand, setBrand ] = useState(currentVehicle.brand);
     const [ model, setModel ] = useState(currentVehicle.model);
     const [ vehicleType, setVehicleType ] = useState(currentVehicle.vehicle_type);
-    const [ correctorCost, setCorrectorCost ] = useState(currentVehicle.corrector_cost);
+    /* const [ correctorCost, setCorrectorCost ] = useState(currentVehicle.corrector_cost); */
 
     const handleSubmitEdit = (event) => {
         event.preventDefault();
+        actions.setAlert({text: 'Vehículo editado correctamente', background: 'primary', visible: true})
         const dataToSend = {
-            brand, model, vehicleType, correctorCost
+            brand, model, vehicle_type: vehicleType, /* correctorCost */
         };
-        actions.editCustomer(currentVehicle.id, dataToSend);
+        actions.editVehicle(currentVehicle.id, dataToSend);
         navigate("/admin/vehicles");
     }
 
     return (
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
             <h1 className="h3 fw-bold text-center my-2 "> Editar datos del vehículo </h1>
+            <Alert/>
             <form onSubmit={handleSubmitEdit}>
                 <div className="form-floating my-3">
                     <input type="brand" className="form-control" id="floatingInput" placeholder="Brand"
@@ -43,16 +45,16 @@ export const EditVehicle = () => {
                     <select className="form-select" placeholder="Tipo de vehículo" id="floatingSelect"
                     value={vehicleType}
                     onChange={(event) => setVehicleType(event.target.value)}>
-                        <option defaultValue>Turismo</option>
-                        <option>Motoclicleta</option>
-                        <option>SUV</option>
-                        <option>4X4</option>
-                        <option>VAN</option>
-                        <option>Extra Van</option>
+                        <option value={"Turism"}>Turismo</option>
+                        <option value={'Motorcycle'}>Motoclicleta</option>
+                        <option value={"SUV"}>SUV</option>
+                        <option value={"4x4"}>4X4</option>
+                        <option value={"Van"}>VAN</option>
+                        <option value={"Extra van"}>Extra Van</option>
                     </select>
                         <label htmlFor="floatingSelect">Tipo de vehículo</label>
                 </div>
-                <div className="form-floating my-3">
+{/*                 <div className="form-floating my-3">
                     <select className="form-select" placeholder="Coste de transporte" id="floatingSelect"
                     value={correctorCost}
                     onChange={(event) => setCorrectorCost(event.target.value)}>
@@ -64,10 +66,8 @@ export const EditVehicle = () => {
                         <option>0.7</option>
                     </select>
                         <label htmlFor="floatingSelect">Coste de transporte</label>
-                </div>
-                <button
-                    onSubmit={handleSubmitEdit}
-                    type="submit" className="btn btn-warning container my-3">Guardar</button>
+                </div> */}
+                <button type="submit" className="btn btn-warning container my-3">Guardar</button>
             </form>
         </div>
                

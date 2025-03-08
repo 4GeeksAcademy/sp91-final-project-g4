@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 272fe82ffea2
+Revision ID: 842a6923f293
 Revises: 
-Create Date: 2025-03-05 15:44:56.411329
+Create Date: 2025-03-08 11:51:08.063169
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '272fe82ffea2'
+revision = '842a6923f293'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -29,9 +29,18 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
+    op.create_table('customers',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('company_name', sa.String(), nullable=False),
+    sa.Column('contact_name', sa.String(length=120), nullable=False),
+    sa.Column('phone', sa.String(), nullable=False),
+    sa.Column('address', sa.String(), nullable=False),
+    sa.Column('cust_base_tariff', sa.Float(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('locations',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=120), nullable=False),
     sa.Column('region', sa.String(length=120), nullable=False),
     sa.Column('city', sa.String(length=120), nullable=False),
     sa.Column('postal_code', sa.String(length=120), nullable=False),
@@ -40,17 +49,16 @@ def upgrade():
     sa.Column('country', sa.String(length=120), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('users',
+    op.create_table('providers',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('last_name', sa.String(length=120), nullable=False),
-    sa.Column('email', sa.String(length=120), nullable=False),
-    sa.Column('password_hash', sa.String(length=256), nullable=False),
+    sa.Column('company_name', sa.String(), nullable=False),
+    sa.Column('contact_name', sa.String(length=120), nullable=False),
     sa.Column('phone', sa.String(), nullable=False),
-    sa.Column('role', sa.String(length=20), nullable=False),
+    sa.Column('address', sa.String(), nullable=False),
+    sa.Column('prov_base_tariff', sa.Float(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email')
+    sa.UniqueConstraint('company_name')
     )
     op.create_table('vehicles',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -60,42 +68,15 @@ def upgrade():
     sa.Column('corrector_cost', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('customers',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('company_name', sa.String(), nullable=False),
-    sa.Column('contact_name', sa.String(length=120), nullable=False),
-    sa.Column('phone', sa.String(), nullable=False),
-    sa.Column('address', sa.String(), nullable=False),
-    sa.Column('cust_base_tariff', sa.Float(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('user_id')
-    )
-    op.create_table('providers',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('company_name', sa.String(), nullable=False),
-    sa.Column('contact_name', sa.String(length=120), nullable=False),
-    sa.Column('phone', sa.String(), nullable=False),
-    sa.Column('address', sa.String(), nullable=False),
-    sa.Column('prov_base_tariff', sa.Float(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('company_name'),
-    sa.UniqueConstraint('user_id')
-    )
     op.create_table('orders',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('plate', sa.String(), nullable=False),
-    sa.Column('distance_km', sa.Float(), nullable=False),
+    sa.Column('distance_km', sa.Float(), nullable=True),
     sa.Column('estimated_date_end', sa.Date(), nullable=False),
-    sa.Column('corrector_cost', sa.Float(), nullable=False),
-    sa.Column('final_cost', sa.Float(), nullable=False),
+    sa.Column('corrector_cost', sa.Float(), nullable=True),
+    sa.Column('final_cost', sa.Float(), nullable=True),
     sa.Column('prov_base_tariff', sa.Float(), nullable=True),
-    sa.Column('cust_base_tariff', sa.Float(), nullable=False),
+    sa.Column('cust_base_tariff', sa.Float(), nullable=True),
     sa.Column('status_order', sa.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), nullable=False),
     sa.Column('order_created_date', sa.Date(), nullable=False),
     sa.Column('order_acepted_date', sa.Date(), nullable=True),
@@ -107,7 +88,7 @@ def upgrade():
     sa.Column('vehicle_id', sa.Integer(), nullable=True),
     sa.Column('destiny_id', sa.Integer(), nullable=True),
     sa.Column('origin_id', sa.Integer(), nullable=True),
-    sa.Column('comment', sa.Text(), nullable=True),
+    sa.Column('comment', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['customer_id'], ['customers.id'], ),
     sa.ForeignKeyConstraint(['destiny_id'], ['locations.id'], ),
     sa.ForeignKeyConstraint(['origin_id'], ['locations.id'], ),
@@ -115,9 +96,25 @@ def upgrade():
     sa.ForeignKeyConstraint(['vehicle_id'], ['vehicles.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('order_document',
+    op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('document_type', sa.Enum('Init', 'End', name='document_type'), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('last_name', sa.String(length=120), nullable=False),
+    sa.Column('email', sa.String(length=120), nullable=False),
+    sa.Column('password_hash', sa.String(length=256), nullable=False),
+    sa.Column('phone', sa.String(), nullable=False),
+    sa.Column('role', sa.String(length=20), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('customer_id', sa.Integer(), nullable=True),
+    sa.Column('provider_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['customer_id'], ['customers.id'], ),
+    sa.ForeignKeyConstraint(['provider_id'], ['providers.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email')
+    )
+    op.create_table('order_documents',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('document_type', sa.Enum('Init', 'End', name='document_type'), nullable=True),
     sa.Column('document_url', sa.String(length=120), nullable=True),
     sa.Column('created_date', sa.Date(), nullable=False),
     sa.Column('order_id', sa.Integer(), nullable=True),
@@ -130,12 +127,12 @@ def upgrade():
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('order_document')
-    op.drop_table('orders')
-    op.drop_table('providers')
-    op.drop_table('customers')
-    op.drop_table('vehicles')
+    op.drop_table('order_documents')
     op.drop_table('users')
+    op.drop_table('orders')
+    op.drop_table('vehicles')
+    op.drop_table('providers')
     op.drop_table('locations')
+    op.drop_table('customers')
     op.drop_table('contact')
     # ### end Alembic commands ###

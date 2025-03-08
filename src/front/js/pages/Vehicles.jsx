@@ -9,9 +9,9 @@ export const Vehicles = () => {
     const navigate = useNavigate()
     const { store, actions } = useContext(Context)
 
-    const handleDelete = async (vehicleID) => {
+/*     const handleDelete = async (vehicleID) => {
         actions.deleteVehicle(vehicleID)
-    }
+    } */
 
     const handleEdit = async (vehicle) => {
         actions.setCurrentVehicle(vehicle)
@@ -55,11 +55,11 @@ export const Vehicles = () => {
                                         <i className="fas fa-edit "></i>
                                     </button>
                                 </td>
-                                <td>
+                                {/* <td>
                                     <button onClick={() => handleDelete(item.id)} type="button" className="btn btn-danger" >
                                         <i className="fas fa-trash-alt"></i>
                                     </button>
-                                </td>
+                                </td> */}
                             </tr>
                         )}
                         </tbody>

@@ -1,6 +1,7 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
+import { Alert } from "../component/Alert.jsx";
 
 
 export const AddProvider = () => {
@@ -16,17 +17,21 @@ export const AddProvider = () => {
 
     const handleSubmitAdd = (event) =>{
         event.preventDefault();
+        actions.setAlert({text: 'Proveedor agregado correctamente', background: 'primary', visible: true})
         const dataToSend = {
-            companyName, contactName, phone, address, provBaseTariff
+            company_name: companyName, contact_name: contactName, phone, address, prov_base_tariff: provBaseTariff
         };
         actions.addProvider(dataToSend);
         navigate("/admin/providers");
     }
 
 
+
+
     return (
         <div className="card container w-100 mt-5" style={{maxWidth: 500, padding: '1rem'}}>
             <h1 className="h3 fw-bold text-center my-2 "> Alta de proveedores </h1>
+            <Alert/>
             <form onSubmit={handleSubmitAdd}> 
                 <div className="form-floating my-3">
                 <input type="companyName" className="form-control" id="floatingInput" placeholder="Company name"

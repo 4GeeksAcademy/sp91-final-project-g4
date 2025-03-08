@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Context } from "../store/appContext.js";
 import transporte from "../../img/transporte.jpg";
 import entrega from "../../img/entrega.jpg";
@@ -7,10 +7,15 @@ import camion from "../../img/camion.jpg";
 import ubicacion from "../../img/ubicacion.jpg";
 import manos from "../../img/manos.jpg";
 import "../../styles/home.css";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+
 
 export const Home = () => {
     const { store, actions } = useContext(Context);
-
+    
+    
     return (
         <div>
             <div id="myCarousel" className="carousel slide mb-6" data-bs-ride="carousel">

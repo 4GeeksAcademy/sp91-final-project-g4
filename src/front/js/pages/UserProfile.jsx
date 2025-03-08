@@ -7,8 +7,9 @@ export const UserProfile = () => {
     const { store, actions } = useContext(Context);
     const params = useParams();
     const navigate = useNavigate()
+console.log(params);
 
-    const handleLogin = () => {
+/*     const handleLogin = () => {
         if (store.isLogged) {
             actions.setIsLogged(false);
             actions.setUser({});
@@ -16,10 +17,15 @@ export const UserProfile = () => {
         }else{
             navigate('/login')
         }
+    } */
+
+    const handleEdit = async (user) => {
+        actions.setCurrentUser(user)
+        navigate("/edit-user")
     }
 
         useEffect(() => {
-            actions.getUser(params.userId)
+            actions.getUser(store.user.id)
         }, [])
 
     return (
@@ -33,9 +39,10 @@ export const UserProfile = () => {
                             <p><strong>Last name:</strong> {store.user.last_name}</p>
                             <p><strong>Email:</strong> {store.user.email}</p>
                             <p><strong>Phone:</strong> {store.user.phone}</p>
+                            <p><strong>Tipo de usuario:</strong> {store.user.role}</p>
                         </div>
                     </div>
-                    <button onClick={handleLogin} className="btn btn-warning w-100 py-2 my-3" type="submit"> {store.isLogged ? 'Log out' : 'Please, login'} </button>
+                    <button onClick={() => handleEdit(store.user)} className="btn btn-warning w-100 py-2 my-3" type="submit"> Editar datos </button>
                 </div>
             </div>
         </div>
