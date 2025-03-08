@@ -57,42 +57,112 @@ def calculate_distance():
     except Exception as e:
         return jsonify({"message": "Error al conectar con OpenRouteService", "error": str(e)}), 500
 
-@api.route("/users", methods=["POST"])
-@jwt_required()
-def signup():
+
+@api.route("/users-admin", methods=["POST"])
+@jwt_required(optional=True)  # Permite autenticación opcional
+def create_admin():
+    # Verificar si ya existen admins en la base de datos
+    existing_admin = db.session.execute(db.select(Users).where(Users.role == "admin")).scalar() 
+    if existing_admin:  # Si ya hay un admin, requiere autenticación
+        claims = get_jwt()
+        role_from_token = claims.get("role")
+        if role_from_token != "admin":
+            return jsonify({"message": "No autorizado. Solo un admin puede crear otro admin."}), 403
     data = request.json
-    additional_claims = get_jwt()
-    # validar es admin o no - return no autorizado
-    # validar que customer id y provider id que tengan uno de los dos valores o ninguno + dos falsos admin
-    # si customer_id tiene numero verificar que la compañia exista
-    customer_id=data.get("customer_id", None)
-    provider_id=data.get("provider_id", None)
-    # si provider_id tiene numero verificar que la compañia provider exista
-    # sign up solo para admin
     email = data.get("email")
     password = data.get("password")
     name = data.get("name", "")
     last_name = data.get("last_name", "")
-    role = data.get("role", "customer")  # Asignamos por defecto "customer - modificar - aqui todos los roles
+    phone = data.get("phone", "")
     if not email or not password:
-        return jsonify({"message": "Email and password are required"}), 400
+        return jsonify({"message": "Email y password son requeridos"}), 400
+    # Verificar si el usuario ya existe
     existing_user = db.session.execute(db.select(Users).where(Users.email == email)).scalar()
     if existing_user:
-        return jsonify({"message": "El usuario already exist"}), 409
-    new_user = Users(email=email, 
-                     name=name, 
-                     last_name=last_name, 
-                     phone=data.get("phone", ""), 
-                     role=role, 
-                     is_active=True)
-    if customer_id: 
-        new_user.customer_id=customer_id
-    if provider_id:
-        new_user.provider_id=provider_id
-    new_user.set_password(password)  # Encripta la contraseña
+        return jsonify({"message": "El usuario ya existe"}), 409
+    new_admin = Users(
+        email=email,
+        name=name,
+        last_name=last_name,
+        phone=phone,
+        role="admin",  # 🔹 SOLO admin
+        is_active=True)
+    # Encriptar contraseña
+    new_admin.set_password(password)
+    db.session.add(new_admin)
+    db.session.commit()
+    return jsonify({"message": "Usuario ADMIN creado exitosamente"}), 201
+
+
+@api.route("/users", methods=["POST"])
+@jwt_required()  # Solo permite si el usuario está autenticado
+def create_user():
+    """
+    Solo un ADMIN puede crear usuarios.
+    Si `customer_id` es proporcionado, el usuario será `customer`.
+    Si `provider_id` es proporcionado, el usuario será `provider`.
+    NO se puede asignar ambos roles a la vez.
+    Un usuario no puede ser admin con un `customer_id` o `provider_id`.
+    """
+    response_body = {}
+    additional_claims = get_jwt()  # Se requiere autenticación obligatoria
+    role_from_token = additional_claims.get("role")
+    # Solo los `admin` pueden acceder a este endpoint
+    if role_from_token != "admin":
+        response_body['message'] = "No autorizado. Solo los administradores pueden crear usuarios."
+        return jsonify(response_body), 403
+    # Obtener datos del request
+    data = request.json
+    email = data.get("email")
+    password = data.get("password")
+    name = data.get("name", "")
+    last_name = data.get("last_name", "")
+    phone = data.get("phone", "")
+    customer_id = data.get("customer_id")
+    provider_id = data.get("provider_id")
+    # Validar datos obligatorios
+    if not email or not password:
+        return jsonify({"message": "Email y password son requeridos"}), 400
+    # Verificar si el usuario ya existe
+    existing_user = db.session.execute(db.select(Users).where(Users.email == email)).scalar()
+    if existing_user:
+        return jsonify({"message": "El usuario ya existe"}), 409
+    # No se pueden asignar ambos roles (`customer` y `provider`)
+    if customer_id and provider_id:
+        return jsonify({"message": "Un usuario no puede ser customer y provider al mismo tiempo"}), 400
+    # Si no se proporciona `customer_id` ni `provider_id`, error
+    if not customer_id and not provider_id:
+        return jsonify({"message": "Debe proporcionar un customer_id o provider_id para asignar un rol"}), 400
+    # Determinar el rol del usuario basado en `customer_id` o `provider_id`
+    if customer_id:
+        existing_customer = db.session.execute(db.select(Customers).where(Customers.id == customer_id)).scalar()
+        if not existing_customer:
+            return jsonify({"message": "El cliente especificado no existe"}), 404
+        role = "customer"
+    elif provider_id:
+        existing_provider = db.session.execute(db.select(Providers).where(Providers.id == provider_id)).scalar()
+        if not existing_provider:
+            return jsonify({"message": "El proveedor especificado no existe"}), 404
+        role = "provider"
+    # Crear el nuevo usuario con el rol determinado
+    new_user = Users(
+        email=email,
+        name=name,
+        last_name=last_name,
+        phone=phone,
+        role=role,  # Se asigna automáticamente
+        is_active=True)
+    # Asociar el usuario al `customer` o `provider`
+    if role == "customer":
+        new_user.customer_id = customer_id
+    if role == "provider":
+        new_user.provider_id = provider_id
+    # Encriptar la contraseña
+    new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({"message": "User created successfully"}), 201
+    return jsonify({"message": f"Usuario {role} creado exitosamente"}), 201
+
 
 @api.route("/login", methods=["POST"])
 def login():
@@ -113,6 +183,7 @@ def login():
     response_body['results'] = user.serialize()
     return response_body, 200
 
+
 @api.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
@@ -124,7 +195,8 @@ def protected():
     response_body['role'] = additional_claims.get("role")
     return response_body, 200
 
-@api.route('/users', methods=['GET'])
+
+@api.route('/users', methods=['GET']) # SOLO ADMIN ACCEDE A ESTO
 @jwt_required()
 def users():
     response_body = {}
@@ -142,57 +214,55 @@ def users():
     response_body['message'] = "List of users" 
     response_body['results'] = result
     return response_body, 200
-    
-@api.route('/users/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+
+
+@api.route('/users/<int:id>', methods=['GET', 'PUT', 'DELETE'])  # HACER QUE CADA CLIENTE Y PROVIDER VEA LOS SUYOS - OK
 @jwt_required()
-def user(id):
-    response_body = {}
+def manage_user(id):
     additional_claims = get_jwt()
     role = additional_claims.get("role")
-    user_id = additional_claims.get("user_id")  # Obtiene el ID del usuario autenticado
-    user = db.session.get(Users, id)
+    user_id = additional_claims.get("user_id")
+    user = db.session.get(Users, id) # Buscar el usuario
     if not user:
-        response_body['message'] = 'User not found'
-        return response_body, 404
+        return jsonify({"message": "User not found"}), 404
+    # ADMIN puede hacer cualquier operación
     if role == "admin":
         if request.method == 'GET':
-            response_body['message'] = f'User {id} found'
-            response_body['results'] = user.serialize()
-            return response_body, 200
+            return jsonify({"message": f'User {id} found', "results": user.serialize()}), 200     
         if request.method == 'PUT':
             data = request.json
             user.name = data.get("name", user.name)
             user.last_name = data.get("last_name", user.last_name)
-            user.email = data.get("email", user.email)
             user.phone = data.get("phone", user.phone)
+            user.role = data.get("role", user.role)
             if "is_active" in data:
+                if user.id == user_id:  # Evitar que un Admin se desactive a sí mismo
+                    return jsonify({"message": "No puedes desactivarte a ti mismo"}), 403
                 user.is_active = data["is_active"]
             db.session.commit()
-            response_body['message'] = f'User {id} updated successfully'
-            response_body['results'] = user.serialize()
-            return response_body, 200
+            return jsonify({"message": f'User {id} updated successfully', "results": user.serialize()}), 200   
         if request.method == 'DELETE':
-            user.is_active = False  # En lugar de eliminar, solo se desactiva
+            if user.id == user_id:  # Evitar que un Admin se desactive a sí mismo
+                return jsonify({"message": "No puedes desactivarte a ti mismo"}), 403
+            user.is_active = False
             db.session.commit()
-            response_body['message'] = f'User {id} deactivated successfully'
-            return response_body, 200   
-    if role in ["customer", "provider"]:  # CUSTOMER y PROVIDER pueden hacer GET y PUT pero solo sobre su propio usuario
-        if user.id != user_id:
-            return jsonify({"message": "You can only access your own data"}), 403
+            return jsonify({"message": f'User {id} deactivated successfully'}), 200
+    # CUSTOMERS solo pueden ver sus propios usuarios
+    customer = db.session.execute(db.select(Customers).where(Customers.id == user.customer_id)).scalar()
+    if role == "customer":
+        if not customer or user.customer_id != customer.id:
+            return jsonify({"message": "Unauthorized access"}), 403
         if request.method == 'GET':
-            response_body['message'] = f'User {id} found'
-            response_body['results'] = user.serialize()
-            return response_body, 200
-        if request.method == 'PUT':
-            data = request.json
-            user.name = data.get("name", user.name)
-            user.last_name = data.get("last_name", user.last_name)
-            user.phone = data.get("phone", user.phone)
-            db.session.commit()
-            response_body['message'] = f'User {id} updated successfully'
-            response_body['results'] = user.serialize()
-            return response_body, 200 
-    return jsonify({"message": "Unauthorized"}), 403  # Si no es admin y está tratando de hacer DELETE, denegar acceso
+            return jsonify({"message": f'User {id} found', "results": user.serialize()}), 200
+    # PROVIDERS solo pueden ver sus propios usuarios
+    provider = db.session.execute(db.select(Providers).where(Providers.id == user.provider_id)).scalar()
+    if role == "provider":
+        if not provider or user.provider_id != provider.id:
+            return jsonify({"message": "Unauthorized access"}), 403
+        if request.method == 'GET':
+            return jsonify({"message": f'User {id} found', "results": user.serialize()}), 200
+    return jsonify({"message": "Unauthorized access"}), 403
+
 
 @api.route('/customers', methods=['GET', 'POST'])
 @jwt_required()
@@ -229,6 +299,7 @@ def customers():
         response_body['results'] = new_customer.serialize()
         return response_body, 201
     
+
 @api.route('/customers/<int:id>', methods=['GET', 'PUT', 'PATCH', 'DELETE']) 
 @jwt_required()
 def customer(id):
@@ -280,6 +351,7 @@ def customer(id):
             return jsonify(response_body), 200
     return jsonify({"message": "Unauthorized access"}), 403  #  PROVIDERS no pueden modificar Customers
     
+
 @api.route('/providers', methods=['GET', 'POST'])
 @jwt_required()
 def providers():
@@ -314,6 +386,7 @@ def providers():
         response_body['message'] = "Proveedor creado exitosamente"
         response_body['results'] = new_provider.serialize()
         return response_body, 201
+
 
 @api.route('/providers/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
@@ -375,6 +448,7 @@ def get_vehicles():
     response_body['results'] = result
     return response_body, 200
 
+
 @api.route('/vehicles', methods=['POST'])
 @jwt_required()
 def vehicles():
@@ -394,6 +468,7 @@ def vehicles():
     response_body['message'] = " Vehiculo creado exitosamente"
     response_body['results'] = new_vehicle.serialize()
     return response_body, 201
+
 
 @api.route('/vehicles/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
@@ -427,6 +502,7 @@ def vehicle(id):
         response_body['message'] = f'Vehicle {id} deshabilitado correctamente'
         return response_body, 200 
 
+
 @api.route('/vehicles-admin', methods=['POST'])
 @jwt_required()
 def vehicles_admin():
@@ -448,6 +524,7 @@ def vehicles_admin():
         response_body['message'] = " Vehiculo creado exitosamente"
         return response_body, 201
     
+
 @api.route('/locations-admin', methods=['POST'])
 @jwt_required()
 def locations_admin():
@@ -474,6 +551,7 @@ def locations_admin():
         return jsonify(response_body), 201 
     return jsonify({'error': 'Método no permitido'}), 405
 
+
 @api.route('/locations', methods=['GET']) # No hace falta proteger GET locations
 def locations():
     response_body = {}
@@ -484,6 +562,7 @@ def locations():
         response_body['results'] = result
         return response_body, 200
     
+
 @api.route('/locations/<int:id>', methods=['GET']) # No hace falta proteger GET locations
 def location(id):
     response_body = {}
@@ -496,6 +575,7 @@ def location(id):
         response_body['results'] = location.serialize()
         return response_body, 200
     
+
 @api.route('/order_documents', methods=['GET', 'POST'])
 # GET - Solo Admin puede ver todos los documentos
 # POST - Admin y Provider pueden crear documentos
@@ -525,6 +605,7 @@ def order_documents():
         response_body['message'] = "Documentación creada exitosamente"
         response_body['results'] = new_document.serialize()
         return jsonify(response_body), 201
+
 
 @api.route('/order_documents/<int:id>', methods=['GET', 'PUT', 'DELETE'])  # COMPROBAR SI POSTMAN FUNCIONA
 # DELETE - Solo Admin puede eliminar
@@ -563,6 +644,7 @@ def order_document_by_id(id):
         response_body['message'] = f'Document {id} deleted successfully'
         return jsonify(response_body), 200
     
+
 @api.route('/orders', methods=['GET', 'POST'])
 # admin ve lista de todas las ordenes
 # customer ve lista de las suyas
@@ -651,6 +733,7 @@ def orders():
         response_body["final_cost_customer"] = round(final_cost_customer, 2)
         return jsonify(response_body), 201
 
+
 @api.route('/orders/<int:order_id>/add-document', methods=['POST'])
 # Endpoint para que proveedor o admin adjunten documentos al cambiar estado a init o end
 @jwt_required()
@@ -675,6 +758,7 @@ def add_order_document(order_id):
     response_body["message"] = "Document added successfully"
     response_body["order_document"] = new_document.serialize()
     return jsonify(response_body), 201
+
 
 @api.route('/assign-providers/<int:order_id>', methods=['PUT'])
 # Endpoint para que un admin asigne un proveedor a la orden
@@ -716,6 +800,7 @@ def assign_provider(order_id):
     response_body["order"] = order.serialize()
     response_body["final_cost_provider"] = round(final_cost_provider, 2)
     return jsonify(response_body), 200
+
 
 @api.route('/orders/<int:order_id>', methods=['GET' , 'PUT', 'DELETE'])  # TODO me falta postman PUT DELETE - MANEJAR ESTADOS
 @jwt_required()
@@ -765,6 +850,7 @@ def get_order(order_id):
         return jsonify(response_body), 200  
     return jsonify({"message": "Unauthorized access"}), 403  # Si no cumple ninguna regla, denegar acceso
 
+
 @api.route("/contacts-admin", methods=["GET"])
 # Solo admin puede hacer get de todos formularios de contacto
 @jwt_required()
@@ -780,6 +866,7 @@ def get_contacts():
     response_body["message"] = "Lista de contactos"
     response_body["results"] = result
     return response_body, 200
+
 
 @api.route("/contacts", methods=["POST"])
 # Cualquier usuario puede enviar un formulario de contacto

@@ -81,6 +81,7 @@ class Customers(db.Model):
     address = db.Column(db.String(), unique=False, nullable=False)
     cust_base_tariff = db.Column(db.Float(), unique=False, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
+    users = db.relationship("Users", backref="customer", lazy="dynamic")  # Relación inversa con Users
     # user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), unique=True)
     # user_customer_to = db.relationship('Users', foreign_keys=[user_id], backref=db.backref('user_customer_to', lazy='select'))
     
