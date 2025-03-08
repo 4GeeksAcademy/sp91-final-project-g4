@@ -6,7 +6,6 @@ import injectContext from "./store/appContext.js";
 
 import { MainNavbar } from "./component/MainNavbar.jsx";
 import { Alert } from "./component/Alert.jsx";
-
 import { Footer } from "./component/Footer.jsx";
 import ScrollToTop from "./component/ScrollToTop.jsx";
 import { BackendURL } from "./component/BackendURL.jsx";
@@ -17,12 +16,18 @@ import { Services } from "./pages/Services.jsx";
 import { ContactUs } from "./pages/ContactUs.jsx";
 import { Login } from "./pages/Login.jsx";
 import { SignUp } from "./pages/SignUp.jsx";
-
 import { UserProfile } from "./pages/UserProfile.jsx";
 import { Customers } from "./pages/Customers.jsx";
+import { CustomerDashboard } from "./pages/CustomerDashboard.jsx";
+import { CustomerProfile } from "./pages/CustomerProfile.jsx";
+import { CustomerNewOrder } from "./pages/CustomerNewOrder.jsx";
+import { CustomerOrders } from "./pages/CustomerOrders.jsx";
 import { EditCustomer } from "./pages/EditCustomer.jsx";
 import { AddCustomer } from "./pages/AddCustomer.jsx";
 import { Providers } from "./pages/Providers.jsx";
+import { ProviderDashboard } from "./pages/ProviderDashboard.jsx";
+import { ProviderOrders } from "./pages/ProviderOrders.jsx";
+import { ProviderProfile } from "./pages/ProviderProfile.jsx";
 import { AddProvider } from "./pages/AddProvider.jsx";
 import { EditProvider } from "./pages/EditProvider.jsx";
 import { Vehicles } from "./pages/Vehicles.jsx";
@@ -51,9 +56,16 @@ const Layout = () => {
                             <Route element={<SignUp/>} path= "/sign-up" />
                             <Route element={<UserProfile/>} path= "/user-profile" />
                             <Route element={<Customers />} path="admin/customers" />
+                            <Route element={<CustomerDashboard />} path="/customer-dashboard" />
+                            <Route element={<CustomerProfile />} path="/customer-profile" />
+                            <Route element={<CustomerNewOrder />} path="/new-order" />
+                            <Route element={<CustomerOrders />} path="/customer-orders" />
                             <Route element={<AddCustomer/>} path= "/add-customer" />
                             <Route element={<EditCustomer />} path="/admin/customers/admin/edit-customer" /> {/*  ¿Cual sería la URL correcta? */}
                             <Route element={<Providers />} path="admin/providers" />
+                            <Route element={<ProviderDashboard />} path="provider-dashboard" />
+                            <Route element={<ProviderOrders />} path="provider-orders" />
+                            <Route element={<ProviderProfile />} path="provider-profile" />
                             <Route element={<AddProvider/>} path= "/add-provider" />
                             <Route element={<EditProvider />} path="/admin/providers/admin/edit-provider" /> {/*  ¿Cual sería la URL correcta? */}
                             <Route element={<Vehicles />} path="/admin/vehicles" /> 
