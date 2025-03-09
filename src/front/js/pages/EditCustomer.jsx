@@ -43,9 +43,11 @@ export const EditCustomer = () => {
         navigate("/admin/customers");
     };
 
-    const handleDeleteUser = async (userId) => {
-        await actions.deleteUser(userId);
-        actions.getCustomerById(currentCustomer.id); // ✅ Actualizar la lista tras eliminación
+    // ✅ Activar/Desactivar usuario
+    const handleToggleUserStatus = async (user) => {
+        const updatedUser = { ...user, is_active: !user.is_active };
+        await actions.editUser(user.id, updatedUser);
+        actions.getCustomerById(currentCustomer.id); // ✅ Actualizar la lista tras cambio de estado
     };
 
     return (
@@ -95,7 +97,8 @@ export const EditCustomer = () => {
                             <th>Email</th>
                             <th>Teléfono</th>
                             <th>Rol</th>
-                            <th>Eliminar</th>
+                            <th>Estado</th>  {/* ✅ Nueva columna de estado */}
+                            <th>Activar/Desactivar</th> {/* ✅ Nuevo botón de encendido/apagado */}
                         </tr>
                     </thead>
                     <tbody>
@@ -106,15 +109,17 @@ export const EditCustomer = () => {
                                     <td>{user.email}</td>
                                     <td>{user.phone}</td>
                                     <td>{user.role}</td>
+                                    <td>{user.is_active ? "Activo" : "Inactivo"}</td> {/* ✅ Mostrar estado */}
                                     <td>
-                                        <button onClick={() => handleDeleteUser(user.id)} className="btn btn-danger">
-                                            <i className="fas fa-trash-alt"></i>
+                                        <button onClick={() => handleToggleUserStatus(user)} 
+                                                className={`btn ${user.is_active ? "btn-success" : "btn-danger"}`}>
+                                            <i className="fas fa-power-off"></i> {/* ✅ Ícono de encendido/apagado */}
                                         </button>
                                     </td>
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan="5" className="text-center">No hay usuarios asignados.</td></tr>
+                            <tr><td colSpan="6" className="text-center">No hay usuarios asignados.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -131,6 +136,7 @@ export const EditCustomer = () => {
         </div>
     );
 };
+
 
 
 

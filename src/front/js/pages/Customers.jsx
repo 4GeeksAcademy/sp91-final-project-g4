@@ -68,7 +68,7 @@ export const Customers = () => {
                                         </button>
                                     </td>
                                     <td>
-                                        <button onClick={() => handleToggleStatus(item)} type="button" className={`btn ${item.is_active ? "btn-danger" : "btn-success"}`}>
+                                        <button onClick={() => handleToggleStatus(item)} type="button" className={`btn ${item.is_active ? "btn-success" : "btn-danger"}`}>
                                             <i className="fas fa-power-off"></i>
                                         </button>
                                     </td>

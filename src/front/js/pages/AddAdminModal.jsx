@@ -25,8 +25,8 @@ export const AddAdminModal = ({ show, onClose }) => {
         const success = await actions.addAdmin(formData);
         if (success) {
             toast.success("Administrador creado correctamente");
-            onClose(); // Cierra el modal
-            navigate("/admin-profile"); // Redirige a "Mis Datos"
+            onClose();
+            actions.getAdmins(); // ✅ Actualiza la lista de administradores
         } else {
             toast.error("Error al crear el administrador");
         }
@@ -35,35 +35,48 @@ export const AddAdminModal = ({ show, onClose }) => {
     if (!show) return null;
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <h2 className="text-center">Añadir Administrador</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Nombre</label>
-                        <input type="text" name="name" className="form-control" onChange={handleChange} required />
+        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+            <div className="modal-dialog">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h5 className="modal-title">Añadir Administrador</h5>
+                        <button type="button" className="btn-close" onClick={onClose}></button>
                     </div>
-                    <div className="form-group">
-                        <label>Apellidos</label>
-                        <input type="text" name="last_name" className="form-control" onChange={handleChange} required />
+                    <div className="modal-body">
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-floating my-3">
+                                <input type="text" className="form-control" name="name" placeholder="Nombre"
+                                    onChange={handleChange} required />
+                                <label>Nombre</label>
+                            </div>
+                            <div className="form-floating my-3">
+                                <input type="text" className="form-control" name="last_name" placeholder="Apellidos"
+                                    onChange={handleChange} required />
+                                <label>Apellidos</label>
+                            </div>
+                            <div className="form-floating my-3">
+                                <input type="email" className="form-control" name="email" placeholder="Email"
+                                    onChange={handleChange} required />
+                                <label>Email</label>
+                            </div>
+                            <div className="form-floating my-3">
+                                <input type="text" className="form-control" name="phone" placeholder="Teléfono"
+                                    onChange={handleChange} required />
+                                <label>Teléfono</label>
+                            </div>
+                            <div className="form-floating my-3">
+                                <input type="password" className="form-control" name="password" placeholder="Contraseña"
+                                    onChange={handleChange} required />
+                                <label>Contraseña</label>
+                            </div>
+                            <button type="submit" className="btn btn-primary w-100">Guardar</button>
+                            <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onClose}>Cancelar</button>
+                        </form>
                     </div>
-                    <div className="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" className="form-control" onChange={handleChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label>Teléfono</label>
-                        <input type="text" name="phone" className="form-control" onChange={handleChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label>Contraseña</label>
-                        <input type="password" name="password" className="form-control" onChange={handleChange} required />
-                    </div>
-                    <button type="submit" className="btn btn-success w-100 mt-3">Dar de Alta</button>
-                </form>
-                <button className="btn btn-danger w-100 mt-2" onClick={onClose}>Cancelar</button>
+                </div>
             </div>
         </div>
     );
 };
+
 
