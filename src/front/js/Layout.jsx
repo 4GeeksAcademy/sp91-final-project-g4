@@ -39,6 +39,7 @@ import { OrderCustomer } from "./pages/OrderCustomer.jsx";
 import { OrderProvider } from "./pages/OrderProvider.jsx";
 import { OrderProviderDetail } from "./pages/OrderProviderDetail.jsx";
 import { EditProfile } from "./pages/EditProfile.jsx";
+import { AddAdminModal } from "./pages/AddAdminModal.jsx";  // ✅ Importación correcta
 import { ToastContainer } from "react-toastify";
 
 
@@ -74,7 +75,7 @@ const Layout = () => {
                             <Route element={<Home />} path="/" />
                             <Route element={<Login />} path="/login" />
                             <Route element={<SignUp />} path="/sign-up" />
-                            <Route element={<UserProfile />} path="/user-profile" />
+                            <Route element={<UserProfile />} path="/admin-profile" />
                             <Route element={<EditProfile />} path="/edit-user" />
                             <Route element={<Customers />} path="/admin/customers" />
                             <Route element={<CustomerDashboard />} path="/customer-dashboard" />
@@ -84,9 +85,9 @@ const Layout = () => {
                             <Route element={<AddCustomer />} path="/add-customer" />
                             <Route element={<EditCustomer />} path="/admin/customers/admin/edit-customer" /> {/*  ¿Cual sería la URL correcta? */}
                             <Route element={<Providers />} path="/admin/providers" />
-                            <Route element={<ProviderDashboard />} path="provider-dashboard" />
-                            <Route element={<ProviderOrders />} path="provider-orders" />
-                            <Route element={<ProviderProfile />} path="provider-profile" />
+                            <Route element={<ProviderDashboard />} path="/provider-dashboard" />
+                            <Route element={<ProviderOrders />} path="/provider-orders" />
+                            <Route element={<ProviderProfile />} path="/provider-profile" />
                             <Route element={<AddProvider />} path="/add-provider" />
                             <Route element={<EditProvider />} path="/admin/providers/admin/edit-provider" /> {/*  ¿Cual sería la URL correcta? */}
                             <Route element={<Vehicles />} path="/admin/vehicles" />
@@ -99,6 +100,9 @@ const Layout = () => {
                             <Route element={<OrderCustomerDetail />} path="/admin/order-customer-detail" />
                             <Route element={<OrderProvider />} path="/admin/orders-providers" />
                             <Route element={<OrderProviderDetail />} path="/admin/order-provider-detail" />
+                            <Route element={<UserProfile />} path="/admin-profile" />
+                            <Route element={<AddAdminModal show={true} onClose={() => navigate("/admin-profile")} />} path="/add-admin" />
+
                         </Routes>
                         <Footer />
                     </ScrollToTop>

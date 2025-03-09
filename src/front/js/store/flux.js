@@ -5,21 +5,21 @@ const getState = ({ getStore, getActions, setStore }) => {
 		store: {
 			message: null,
 			isLogged: false,
-			alert: {text:'', background: 'primary', visible: 'false'},
+			token: localStorage.getItem('token') || null, // 🔹 Guarda el token
+			alert: { text: '', background: 'primary', visible: 'false' },
 			user: {},
+			admins: [], // 🔹 Añadir lista de administradores
 			currentUser: {},
 			customers: [],
-			currentCustomer:{},
+			currentCustomer: {},
 			providers: [],
-			currentProvider:{},
+			currentProvider: {},
 			vehicles: [],
 			currentVehicle: {},
 			orders: [],
 			currentOrder: {},
 			locations: [],
 			currentLocation: {},
-		
-
 		},
 		actions: {
 			setIsLogged: (value) => { setStore({ isLogged: value }) },
@@ -47,7 +47,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				return;
 			},
 			login: async (dataToSend) =>{
-				const uri = `${process.env.BACKEND_URL}/api/login`
+				const uri = `${process.env.BACKEND_URL}/api/login`;
 				const options = {
 					method: 'POST',
 					headers: {
@@ -55,27 +55,35 @@ const getState = ({ getStore, getActions, setStore }) => {
 					},
 					body: JSON.stringify(dataToSend)
 				};
+			
 				console.log(options);
 				const response = await fetch(uri, options);
 				if (!response.ok) {
-					console.log('error:', response.status, response.statusText)
+					console.log('error:', response.status, response.statusText);
 					if(response.status == 401){
-						toast.error("Email o contraseña incorrecto")					
+						toast.error("Email o contraseña incorrecto");					
 					}
-					return
+					return;
 				}
-				const data = await response.json()
-				toast.success("Usuario logeado correctamente")
-				localStorage.setItem('token', data.access_token)
+			
+				const data = await response.json();
+				toast.success("Usuario logeado correctamente");
+			
+				localStorage.setItem('token', data.access_token); // 🔹 Guardar token en localStorage
+			
 				setStore({
 					isLogged: true,
+					token: data.access_token, // 🔹 Añadido para que esté en el store
 					user: data.results
-				})		
-				if (data.results.role == "admin"){
+				});
+			
+				if (data.results.role == "admin") {
 					getActions().getCustomers();
 					getActions().getProviders();
-				}  
+					getActions().getAdmins(); // 🔹 Llamar a getAdmins() si es admin
+				}
 			},
+			
 			accessProtected: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/protected`;
 				const options = {
@@ -109,24 +117,36 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			},
 			getUser: async (userId) => {
-				const uri = `${process.env.BACKEND_URL}/api/users/${userId}`;
-				const options = {
-					method: 'GET',
-					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
+				try {
+					const store = getStore();
+					const token = store.token || localStorage.getItem('token');
+
+					if (!token) {
+						console.error("❌ No hay token disponible");
+						return;
 					}
-				};
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log('Error', response.status, response.statusText);
-					return
+
+					const uri = `${process.env.BACKEND_URL}/api/users/${userId}`;
+					const options = {
+						method: 'GET',
+						headers: {
+							Authorization: `Bearer ${token}`,
+						}
+					};
+
+					const response = await fetch(uri, options);
+					if (!response.ok) throw new Error(`Error ${response.status}`);
+
+					const data = await response.json();
+					console.log("✅ Usuario obtenido:", data.results);
+
+					setStore({ user: data.results });
+				} catch (error) {
+					console.error("❌ Error en getUser:", error);
 				}
-				const data = await response.json()
-				console.log(data);
-				setStore({ user: data.results });
 			},
-			editUser: async (userId, dataToSend) =>{
-				const uri= `${process.env.BACKEND_URL}/api/users/${userId}`;
+			editUser: async (userId, dataToSend) => {
+				const uri = `${process.env.BACKEND_URL}/api/users/${userId}`;
 				const options = {
 					method: "PUT",
 					headers: {
@@ -134,15 +154,94 @@ const getState = ({ getStore, getActions, setStore }) => {
 						"Content-Type": "application/json"
 					},
 					body: JSON.stringify(dataToSend)
+				};
+			
+				try {
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						console.error(`❌ Error al editar usuario: ${response.status}`);
+						return false;
+					}
+			
+					const data = await response.json();
+					setStore({ user: data.results }); // ✅ Actualiza el store con los nuevos datos
+			
+					return true;  // ✅ Indica que la edición fue exitosa
+				} catch (error) {
+					console.error("❌ Error en editUser:", error);
+					return false;
 				}
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					return;
-				}
-				setStore({alert: {text: 'Usuario editado correctamente ', background: 'success', visible: true}})
-
-				getActions().getUser(userId)
 			},
+
+			getAdmins: async () => {
+				try {
+					const store = getStore();
+					const token = store.token || localStorage.getItem('token');
+
+					if (!token) {
+						console.error("❌ No hay token disponible para obtener admins");
+						return;
+					}
+
+					const uri = `${process.env.BACKEND_URL}/api/users`;
+					const options = {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json',
+							'Authorization': `Bearer ${token}`
+						}
+					};
+
+					const response = await fetch(uri, options);
+					if (!response.ok) throw new Error(`Error ${response.status}`);
+
+					const data = await response.json();
+					console.log("✅ Lista de admins obtenida:", data.results);
+
+					const userId = store.user.id; // 🔹 Obtener ID correctamente
+					const admins = data.results.filter(user => user.role === "admin" && user.id !== userId);
+					console.log("📌 Administradores filtrados:", admins);
+
+					setStore({ admins });
+				} catch (error) {
+					console.error("❌ Error en getAdmins:", error);
+				}
+			},
+
+			addAdmin: async (dataToSend) => {
+				try {
+					const uri = `${process.env.BACKEND_URL}/api/users-admin`;
+					const token = localStorage.getItem("token");
+			
+					if (!token) {
+						console.error("❌ No hay token disponible");
+						return false;
+					}
+			
+					const options = {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${token}`
+						},
+						body: JSON.stringify(dataToSend)
+					};
+			
+					const response = await fetch(uri, options);
+					if (!response.ok) throw new Error(`Error ${response.status}`);
+			
+					const data = await response.json();
+					console.log("✅ Admin creado:", data);
+					await getActions().getAdmins(); // Actualiza la lista de admins
+			
+					return true;
+				} catch (error) {
+					console.error("❌ Error en addAdmin:", error);
+					return false;
+				}
+			},
+			
+							
 			getCustomers: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/customers`;
 				const options = {

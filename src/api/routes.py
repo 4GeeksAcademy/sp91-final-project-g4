@@ -16,6 +16,21 @@ CORS(api)  # Allow CORS requests to this API
 # API Key de OpenRouteService para geolocalización (Debes reemplazarla con una válida)
 ORS_API_KEY = "5b3ce3597851110001cf624838efe49eff8748218b0a9b692f3fb14e"
 
+@api.route('/admins', methods=['GET'])
+@jwt_required()
+def get_admins():
+    """
+    Endpoint para obtener solo los usuarios con rol de administrador.
+    Solo los administradores pueden acceder a esta información.
+    """
+    additional_claims = get_jwt()
+    role = additional_claims.get("role")
+    if role != 'admin':  # Solo los administradores pueden acceder
+        return jsonify({"message": "Usuario no autorizado"}), 403
+    admins = db.session.execute(db.select(Users).where(Users.role == "admin", Users.is_active == True)).scalars()
+    result = [admin.serialize() for admin in admins]
+    return jsonify({"message": "Lista de administradores", "results": result}), 200
+
 @api.route("/calculate-distances", methods=["POST"])
 @jwt_required()  # Requiere autenticación JWT
 def calculate_distance():
