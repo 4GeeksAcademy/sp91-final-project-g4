@@ -102,20 +102,53 @@ const getState = ({ getStore, getActions, setStore }) => {
 				setStore({alert: {text: data.message, background: 'success', visible: true}})
 			},
 			addUser: async (dataToSend) => {
-				const uri =`${process.env.BACKEND_URL}/api/users`
+				const uri = `${process.env.BACKEND_URL}/api/users`;
+				const token = localStorage.getItem("token"); // ✅ Obtener el token
+			
+				if (!token) {
+					console.error("❌ No hay token disponible, no se puede añadir usuario.");
+					return false;
+				}
+			
+				// ✅ Validar que `customer_id` esté presente si el rol es "customer"
+				if (dataToSend.role === "customer" && !dataToSend.customer_id) {
+					console.error("❌ Faltante: customer_id es obligatorio para clientes.");
+					return false;
+				}
+			
+				// ✅ Validar que `password` esté presente
+				if (!dataToSend.password) {
+					console.error("❌ Faltante: password es obligatorio.");
+					return false;
+				}
+			
 				const options = {
 					method: "POST",
 					headers: {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"Authorization": `Bearer ${token}` // ✅ Incluir token
 					},
 					body: JSON.stringify(dataToSend)
-				}
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log('error:', response.status, response.statusText)
-					return  
+				};
+			
+				try {
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						const errorData = await response.json();
+						console.error(`❌ Error al añadir usuario: ${response.status}`, errorData);
+						return false;
+					}
+			
+					const data = await response.json();
+					console.log("✅ Usuario creado:", data);
+			
+					return true; // ✅ Indicar que la operación fue exitosa
+				} catch (error) {
+					console.error("❌ Error en addUser:", error);
+					return false;
 				}
 			},
+				
 			getUser: async (userId) => {
 				try {
 					const store = getStore();
@@ -244,38 +277,65 @@ const getState = ({ getStore, getActions, setStore }) => {
 							
 			getCustomers: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/customers`;
+				const token = localStorage.getItem("token");
+			
+				if (!token) {
+					console.error("❌ No hay token disponible, no se puede obtener la lista de clientes.");
+					return;
+				}
+			
 				const options = {
 					method: "GET",
 					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
+						Authorization: `Bearer ${token}`
 					}
 				};
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log("error:", response.status, response.statusText);
+			
+				try {
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						console.error(`❌ Error al obtener clientes: ${response.status}`);
+						return;
+					}
+					const data = await response.json();
+					setStore({ customers: data.results || [] }); // ✅ Asegurar que customers siempre sea un array
+				} catch (error) {
+					console.error("❌ Error en getCustomers:", error);
 				}
-				const data = await response.json();
-				setStore({ customers: data.results });
 			},
-			getCustomerById: async (customerId) => { /*descomentar con nuevo back*/
-				/*const uri = `${process.env.BACKEND_URL}/api/customers/${customerId}`;
-				const options = {
-					method: 'GET',
-					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
-					}
-				};
-
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log('Error', response.status, response.statusText);
+			
+			getCustomerById: async (customerId) => {
+				const uri = `${process.env.BACKEND_URL}/api/customers/${customerId}`;
+				const token = localStorage.getItem("token"); // ✅ Obtener token
+			
+				if (!token) {
+					console.error("❌ No hay token disponible, no se puede obtener cliente.");
 					return;
 				}
-
-				const data = await response.json();*/
-
-				setStore({ customer: dataTemp });  // Guardamos los datos del customer
+			
+				const options = {
+					method: "GET",
+					headers: {
+						"Authorization": `Bearer ${token}`
+					}
+				};
+			
+				try {
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						console.error(`❌ Error al obtener cliente: ${response.status}`);
+						return;
+					}
+			
+					const data = await response.json();
+					console.log("✅ Cliente obtenido:", data.results);
+			
+					setStore({ currentCustomer: data.results }); // ✅ Guardar cliente en el store
+				} catch (error) {
+					console.error("❌ Error en getCustomerById:", error);
+				}
 			},
+			
 			addCustomer: async (dataToSend) => {
 				const uri =`${process.env.BACKEND_URL}/api/customers`
 				const options = {
@@ -294,40 +354,47 @@ const getState = ({ getStore, getActions, setStore }) => {
 				setStore({alert: {text: 'Cliente agregado correctamente ', background: 'success', visible: true}})
 				getActions().getCustomers()
 			},
-			deleteCustomer: async (customerId) => {		
+			deleteCustomer: async (customerId) => {
 				const uri = `${process.env.BACKEND_URL}/api/customers/${customerId}`;
 				const options = {
 					method: "DELETE",
 					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
+						Authorization: `Bearer ${localStorage.getItem("token")}`
 					}
-				}
+				};
 				const response = await fetch(uri, options);
 				if (!response.ok) {
-					console.log('error:', response.status, response.statusText)
-					return
-				}
-				setStore({alert: {text: 'Cliente desactivado correctamente ', background: 'success', visible: true}})
-				getActions().getCustomers();
-			},
-			editCustomer: async (customerId, dataToSend) =>{
-				const uri= `${process.env.BACKEND_URL}/api/customers/${customerId}`;
-				const options = {
-					method: "PUT",
-					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`,
-						"Content-Type": "application/json"
-					},
-					body: JSON.stringify(dataToSend)
-				}
-				const response = await fetch(uri, options);
-				if (!response.ok) {
+					console.log("error", response.status, response.statusText);
 					return;
 				}
-				setStore({alert: {text: 'Cliente editado correctamente ', background: 'success', visible: true}})
-
-				getActions().getCustomers()
+				getActions().getCustomers();
 			},
+			editCustomer: async (customerId, dataToSend) => {
+				try {
+					const uri = `${process.env.BACKEND_URL}/api/customers/${customerId}`;
+					const options = {
+						method: "PUT",
+						headers: {
+							"Authorization": `Bearer ${localStorage.getItem('token')}`,
+							"Content-Type": "application/json"
+						},
+						body: JSON.stringify(dataToSend)
+					};
+			
+					const response = await fetch(uri, options);
+					if (!response.ok) throw new Error(`Error ${response.status}`);
+			
+					const data = await response.json();
+					setStore({ currentCustomer: data.results }); // ✅ Actualizar el cliente editado en el store
+					getActions().getCustomers(); // ✅ Refrescar la lista de clientes en la UI
+			
+					return true;
+				} catch (error) {
+					console.error("❌ Error en editCustomer:", error);
+					return false;
+				}
+			},
+			
 			getProviders: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/providers`;
 				const options = {

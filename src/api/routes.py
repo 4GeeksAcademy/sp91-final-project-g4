@@ -345,6 +345,11 @@ def customer(id):
             customer.contact_name = data.get("contact_name", customer.contact_name)
             customer.phone = data.get("phone", customer.phone)
             customer.address = data.get("address", customer.address)
+            if "cust_base_tariff" in data:
+                try:
+                    customer.cust_base_tariff = float(data["cust_base_tariff"])  # ✅ Convertir a número
+                except ValueError:
+                    return jsonify({"message": "Invalid value for cust_base_tariff"}), 400  # Manejo de error
             if "is_active" in data:
                 customer.is_active = data["is_active"]  # Permitir activar/desactivar
             db.session.commit()

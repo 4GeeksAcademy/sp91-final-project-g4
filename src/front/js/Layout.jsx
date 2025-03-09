@@ -83,7 +83,7 @@ const Layout = () => {
                             <Route element={<CustomerNewOrder />} path="/new-order" />
                             <Route element={<CustomerOrders />} path="/customer-orders" />
                             <Route element={<AddCustomer />} path="/add-customer" />
-                            <Route element={<EditCustomer />} path="/admin/customers/admin/edit-customer" /> {/*  ¿Cual sería la URL correcta? */}
+                            <Route element={<EditCustomer />} path="/admin/edit-customer" /> // ✅ Corrección de la ruta {/*  ¿Cual sería la URL correcta? */}
                             <Route element={<Providers />} path="/admin/providers" />
                             <Route element={<ProviderDashboard />} path="/provider-dashboard" />
                             <Route element={<ProviderOrders />} path="/provider-orders" />
