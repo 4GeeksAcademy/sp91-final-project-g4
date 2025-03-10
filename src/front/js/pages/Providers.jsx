@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
+
 
 export const Providers = () => {
     const navigate = useNavigate();

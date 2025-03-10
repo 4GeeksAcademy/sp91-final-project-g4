@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
 
 export const OrderProvider = () => {
     const navigate = useNavigate();
@@ -27,7 +26,6 @@ export const OrderProvider = () => {
             await actions.getVehicles();  
             await actions.getLocations(); 
         };
-        actions.setAlert({ text: '', background: 'primary', visible: false });
 
         fetchData();
     }, []);
@@ -45,12 +43,13 @@ export const OrderProvider = () => {
             store.locations &&
             store.locations.length > 0
         ) {
-            const combinedData = store.orders.map((order) => {
+                const combinedData = store.orders.map((order) => {
                 const customer = store.customers.find((customer) => customer.id === order.customer_id);
                 const provider = store.providers.find((provider) => provider.id === order.provider_id);
                 const vehicle = store.vehicles.find((vehicle) => vehicle.id === order.vehicle_id);
                 const originLocation = store.locations.find((location) => location.id === order.origin_id);
                 const destinationLocation = store.locations.find((location) => location.id === order.destiny_id);
+                console.log(destinationLocation);
                 
                 return {
                     ...order,
@@ -64,10 +63,10 @@ export const OrderProvider = () => {
                     providerContact: provider ? provider.contact_name : "Desconocido",
                     model: vehicle ? vehicle.model : "Desconocido",
                     brand: vehicle ? vehicle.brand : "Desconocido",
-                    origin: originLocation ? originLocation.name : "Desconocido",
+                    origin: originLocation ? originLocation.city : "Desconocido",
                     origin_zip: originLocation ? originLocation.postal_code: "Desconocido",
                     destiny_zip: destinationLocation ? destinationLocation.postal_code: "Desconocido",
-                    destination: destinationLocation ? destinationLocation.name : "Desconocido",
+                    destination: destinationLocation ? destinationLocation.city : "Desconocido",
                     regionOrigin: originLocation ? originLocation.region : "Desconocido",
                     regionDestiny: destinationLocation ? destinationLocation.region : "Desconocido",
                 };
@@ -95,6 +94,7 @@ export const OrderProvider = () => {
                         <thead>
                             <tr>
                                 <th scope="col">Proveedor</th>
+                                <th scope="col">Cliente</th>
                                 <th scope="col">Fecha de pedido</th>
                                 <th scope="col">Fecha estimada de entrega</th>
                                 <th scope="col">Origen</th>
@@ -114,8 +114,8 @@ export const OrderProvider = () => {
                                     <td>{order.providerCompanyName}</td>
                                     <td>{order.order_created_date}</td>
                                     <td>{order.estimated_date_end}</td>
-                                    <td>{order.origin}</td>
-                                    <td>{order.destination}</td>
+                                    <td>{order.regionOrigin}</td>
+                                    <td>{order.regionDestiny}</td>
                                     <td>{order.brand}</td>
                                     <td>{order.model}</td>
                                     <td>{order.plate}</td>

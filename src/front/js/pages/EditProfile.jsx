@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { Context } from "../store/appContext.js";
 import { useNavigate } from "react-router-dom";
-import { Alert } from "../component/Alert.jsx";
 
 export const EditProfile = () => {
     const { store, actions } = useContext(Context);
@@ -30,7 +29,6 @@ export const EditProfile = () => {
     const handleSubmitEdit = async (event) => {
         event.preventDefault();
         
-        actions.setAlert({ text: 'Usuario editado correctamente', background: 'primary', visible: true });
         
         const dataToSend = {
             name, last_name: lastName, email, phone, role: roleUser
@@ -53,7 +51,6 @@ export const EditProfile = () => {
     return (
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: "1rem" }}>
             <h1 className="h3 fw-bold text-center my-2">Editar datos de usuario</h1>
-            <Alert />
             <form onSubmit={handleSubmitEdit}>
                 <div className="form-floating my-3">
                     <input type="text" className="form-control" placeholder="Nombre" value={name}
