@@ -520,20 +520,23 @@ def vehicle(id):
     if role != 'admin':
         response_body['message'] = 'Usuario no autorizado'
         return response_body, 401
-    if request.method == 'PUT':  # Hay que proteger el PUT - Get pueden todos
+    if request.method == 'PUT':  # ✅ Ahora permite actualizar `is_active`
         data = request.json
         vehicle.brand = data.get("brand", vehicle.brand)
         vehicle.model = data.get("model", vehicle.model)
-        vehicle.vehicle_type = data.get("vehicle_type", vehicle.vehicle_type)
+        vehicle.vehicle_type = data.get("vehicle_type", vehicle.vehicle_type)      
+        # permite activar/desactivar el vehículo
+        if "is_active" in data:
+            vehicle.is_active = data["is_active"]
         db.session.commit()
-        response_body['message'] = f'Vehicle {id} actualizado correctamente'
+        response_body['message'] = f'Vehiculo {id} actualizado correctamente'
         response_body['results'] = vehicle.serialize()
         return response_body, 200
     if request.method == 'DELETE':
         vehicle.is_active = False  # Deshabilita el vehículo en lugar de eliminarlo
         db.session.commit()
-        response_body['message'] = f'Vehicle {id} deshabilitado correctamente'
-        return response_body, 200 
+        response_body['message'] = f'Vehiculo {id} deshabilitado correctamente'
+        return response_body, 200
 
 
 @api.route('/vehicles-admin', methods=['POST'])

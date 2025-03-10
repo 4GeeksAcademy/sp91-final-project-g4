@@ -535,22 +535,28 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
 			getVehicles: async () => {
-				const uri = `${process.env.BACKEND_URL}/api/vehicles`;
+				const uri = `${process.env.BACKEND_URL}/api/vehicles?include_inactive=true`; // ✅ Traer activos e inactivos
 				const options = {
 					method: "GET",
 					headers: {
 						Authorization: `Bearer ${localStorage.getItem('token')}`
 					}
 				};
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log("error:", response.status, response.statusText);
+				
+				try {
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						throw new Error(`Error ${response.status}: ${response.statusText}`);
+					}
+					const data = await response.json();
+					setStore({ vehicles: data.results });
+				} catch (error) {
+					console.error("❌ Error en getVehicles:", error);
 				}
-				const data = await response.json();
-				setStore({ vehicles: data.results });
 			},
+			
 			addVehicle: async (dataToSend) => {
-				const uri =`${process.env.BACKEND_URL}/api/vehicles`
+				const uri = `${process.env.BACKEND_URL}/api/vehicles`;
 				const options = {
 					method: "POST",
 					headers: {
@@ -558,48 +564,82 @@ const getState = ({ getStore, getActions, setStore }) => {
 						Authorization: `Bearer ${localStorage.getItem('token')}`
 					},
 					body: JSON.stringify(dataToSend)
+				};
+			
+				try {
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						throw new Error(`Error ${response.status}: ${response.statusText}`);
+					}
+					setStore({ alert: { text: 'Vehículo agregado correctamente', background: 'success', visible: true } });
+					getActions().getVehicles();
+				} catch (error) {
+					console.error("❌ Error en addVehicle:", error);
 				}
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log('error:', response.status, response.statusText)
-					return  
-				}
-				setStore({alert: {text: 'Vehículo agregado correctamente ', background: 'success', visible: true}})
-				getActions().getVehicles()
 			},
-			deleteVehicle: async (vehicleId) => {		
+			
+			editVehicle: async (vehicleId, dataToSend) => {
 				const uri = `${process.env.BACKEND_URL}/api/vehicles/${vehicleId}`;
 				const options = {
-					method: "DELETE",
+					method: "PUT",
 					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${localStorage.getItem("token")}`
+					},
+					body: JSON.stringify(dataToSend)
+				};
+			
+				try {
+					console.log("📤 Enviando datos a la API:", dataToSend);
+			
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						const errorData = await response.json();
+						console.error("❌ Error en la API:", response.status, errorData);
+						return false;
 					}
+			
+					const data = await response.json();
+					console.log("✅ Respuesta de la API:", data);
+			
+					// 🔹 Actualizar el estado directamente para reflejar el cambio sin esperar a getVehicles
+					const store = getStore();
+					const updatedVehicles = store.vehicles.map(vehicle => 
+						vehicle.id === vehicleId ? { ...vehicle, ...dataToSend } : vehicle
+					);
+					setStore({ vehicles: updatedVehicles });
+			
+					return true;
+				} catch (error) {
+					console.error("❌ Error en editVehicle:", error);
+					return false;
 				}
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log("error", response.status, response.statusText);
-					return
-				}
-				setStore({alert: {text: 'Vehículo eliminado correctamente ', background: 'success', visible: true}})
-				getActions().getVehicles();
 			},
-			editVehicle: async (vehicleId, dataToSend) =>{
-				const uri= `${process.env.BACKEND_URL}/api/vehicles/${vehicleId}`;
+			
+			toggleVehicleStatus: async (vehicleId, currentStatus) => {
+				const updatedData = { is_active: !currentStatus }; // ✅ Alternar estado
+				const uri = `${process.env.BACKEND_URL}/api/vehicles/${vehicleId}`;
 				const options = {
 					method: "PUT",
 					headers: {
 						"Content-Type": "application/json",
 						Authorization: `Bearer ${localStorage.getItem('token')}`
 					},
-					body: JSON.stringify(dataToSend)
+					body: JSON.stringify(updatedData)
+				};
+			
+				try {
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						throw new Error(`Error ${response.status}: ${response.statusText}`);
+					}
+					setStore({ alert: { text: `Vehículo ${currentStatus ? "desactivado" : "activado"} correctamente`, background: 'primary', visible: true } });
+					getActions().getVehicles(); // ✅ Recargar lista después de cambio de estado
+				} catch (error) {
+					console.error("❌ Error en toggleVehicleStatus:", error);
 				}
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					return;
-				}
-				setStore({alert: {text: 'Vehículo editado correctamente ', background: 'success', visible: true}})
-				getActions().getVehicles()
 			},
+			
 			
 			getOrders: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/orders`;
