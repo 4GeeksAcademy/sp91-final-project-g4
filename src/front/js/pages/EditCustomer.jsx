@@ -2,12 +2,13 @@ import React, { useContext, useEffect, useState } from "react";
 import { Context } from "../store/appContext.js";
 import { useNavigate } from "react-router-dom";
 import { Alert } from "../component/Alert.jsx";
-import { AddCustomerUserModal } from "../pages/AddCustomerUserModal.jsx"; // ✅ Corregida la importación
+import { AddCustomerUserModal } from "../pages/AddCustomerUserModal.jsx"; // ✅ Importación del modal
 
 export const EditCustomer = () => {
     const { store, actions } = useContext(Context);
     const navigate = useNavigate();
-    const [showModal, setShowModal] = useState(false); // ✅ Estado para el modal de usuario
+    const [showModal, setShowModal] = useState(false); 
+    const [editingUser, setEditingUser] = useState(null); // ✅ Estado para editar usuario
 
     const currentCustomer = store.currentCustomer;
     const [companyName, setCompanyName] = useState(currentCustomer?.company_name || "");
@@ -16,7 +17,6 @@ export const EditCustomer = () => {
     const [address, setAddress] = useState(currentCustomer?.address || "");
     const [custBaseTariff, setCustBaseTariff] = useState(currentCustomer?.cust_base_tariff || "");
 
-    // Obtener usuarios del cliente cuando cambia el ID del cliente
     useEffect(() => {
         if (currentCustomer?.id) {
             actions.getCustomerById(currentCustomer.id);
@@ -32,7 +32,7 @@ export const EditCustomer = () => {
             contact_name: contactName,
             phone,
             address,
-            cust_base_tariff: parseFloat(custBaseTariff) || 0  // ✅ Convertimos tarifa a número
+            cust_base_tariff: parseFloat(custBaseTariff) || 0  
         };
 
         actions.editCustomer(currentCustomer.id, dataToSend);
@@ -43,11 +43,15 @@ export const EditCustomer = () => {
         navigate("/admin/customers");
     };
 
-    // ✅ Activar/Desactivar usuario
     const handleToggleUserStatus = async (user) => {
         const updatedUser = { ...user, is_active: !user.is_active };
         await actions.editUser(user.id, updatedUser);
-        actions.getCustomerById(currentCustomer.id); // ✅ Actualizar la lista tras cambio de estado
+        actions.getCustomerById(currentCustomer.id);
+    };
+
+    const handleEditUser = (user) => {
+        setEditingUser(user); // ✅ Cargar el usuario en el estado
+        setShowModal(true);
     };
 
     return (
@@ -97,8 +101,9 @@ export const EditCustomer = () => {
                             <th>Email</th>
                             <th>Teléfono</th>
                             <th>Rol</th>
-                            <th>Estado</th>  {/* ✅ Nueva columna de estado */}
-                            <th>Activar/Desactivar</th> {/* ✅ Nuevo botón de encendido/apagado */}
+                            <th>Estado</th>
+                            <th>Editar</th> {/* ✅ Nueva columna de edición */}
+                            <th>Activar/Desactivar</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -109,33 +114,44 @@ export const EditCustomer = () => {
                                     <td>{user.email}</td>
                                     <td>{user.phone}</td>
                                     <td>{user.role}</td>
-                                    <td>{user.is_active ? "Activo" : "Inactivo"}</td> {/* ✅ Mostrar estado */}
+                                    <td>{user.is_active ? "Activo" : "Inactivo"}</td>
+                                    <td>
+                                        <button onClick={() => handleEditUser(user)} 
+                                                className="btn btn-secondary">
+                                            <i className="fas fa-edit"></i> {/* ✅ Ícono de edición */}
+                                        </button>
+                                    </td>
                                     <td>
                                         <button onClick={() => handleToggleUserStatus(user)} 
                                                 className={`btn ${user.is_active ? "btn-success" : "btn-danger"}`}>
-                                            <i className="fas fa-power-off"></i> {/* ✅ Ícono de encendido/apagado */}
+                                            <i className="fas fa-power-off"></i> 
                                         </button>
                                     </td>
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan="6" className="text-center">No hay usuarios asignados.</td></tr>
+                            <tr><td colSpan="7" className="text-center">No hay usuarios asignados.</td></tr>
                         )}
                     </tbody>
                 </table>
             </div>
 
-            {/* ✅ Modal para añadir usuario */}
+            {/* ✅ Modal para añadir/editar usuario */}
             {showModal && (
                 <AddCustomerUserModal
                     show={showModal}
-                    onClose={() => setShowModal(false)}
-                    customerId={currentCustomer.id} // ✅ Pasamos correctamente el customerId
+                    onClose={() => {
+                        setShowModal(false);
+                        setEditingUser(null); // ✅ Resetear usuario después de cerrar
+                    }}
+                    customerId={currentCustomer.id}
+                    userData={editingUser} // ✅ Pasar datos si es edición
                 />
             )}
         </div>
     );
 };
+
 
 
 

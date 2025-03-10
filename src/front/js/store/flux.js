@@ -396,57 +396,97 @@ const getState = ({ getStore, getActions, setStore }) => {
 			},
 			
 			getProviders: async () => {
-				const uri = `${process.env.BACKEND_URL}/api/providers`;
-				const options = {
-					method: "GET",
-					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
-					}
-				};
-				
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log("error:", response.status, response.statusText);
-				}
-				const data = await response.json();
-				setStore({ providers: data.results });
-			},
-			getProviderById: async (providerId) => { /*descomentar con nuevo back*/
-				/*const uri = `${process.env.BACKEND_URL}/api/provider/${providerId}`;
-				const options = {
-					method: 'GET',
-					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
-					}
-				};
+				const uri = `${process.env.BACKEND_URL}/api/providers?include_inactive=true`;
+                const token = localStorage.getItem("token");
 
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log('Error', response.status, response.statusText);
-					return;
-				}
+                if (!token) {
+                    console.error("❌ No hay token disponible, no se puede obtener la lista de proveedores.");
+                    return;
+                }
 
-				const data = await response.json();*/
-				setStore({ provider: dataTemp });  // Guardamos los datos del provider
-			},
+                const options = {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                };
+
+                try {
+                    const response = await fetch(uri, options);
+                    if (!response.ok) {
+                        console.error(`❌ Error al obtener proveedores: ${response.status}`);
+                        return;
+                    }
+
+                    const data = await response.json();
+                    setStore({ providers: data.results || [] }); // ✅ Asegurar que providers siempre sea un array
+                } catch (error) {
+                    console.error("❌ Error en getProviders:", error);
+                }
+            },
+
+            getProviderById: async (providerId) => {
+                const uri = `${process.env.BACKEND_URL}/api/providers/${providerId}`;
+                const token = localStorage.getItem("token");
+
+                if (!token) {
+                    console.error("❌ No hay token disponible, no se puede obtener proveedor.");
+                    return;
+                }
+
+                const options = {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                };
+
+                try {
+                    const response = await fetch(uri, options);
+                    if (!response.ok) {
+                        console.error(`❌ Error al obtener proveedor: ${response.status}`);
+                        return;
+                    }
+
+                    const data = await response.json();
+                    console.log("✅ Proveedor obtenido:", data.results);
+                    setStore({ currentProvider: data.results });
+                } catch (error) {
+                    console.error("❌ Error en getProviderById:", error);
+                }
+            },
 
 			addProvider: async (dataToSend) => {
-				const uri =`${process.env.BACKEND_URL}/api/providers`
-				const options = {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${localStorage.getItem('token')}`	
-					},
-					body: JSON.stringify(dataToSend)
-				}
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log('error:', response.status, response.statusText)
-					return  
-				}
-				getActions().getProviders()
-			},
+                const uri = `${process.env.BACKEND_URL}/api/providers`;
+                const token = localStorage.getItem("token");
+
+                if (!token) {
+                    console.error("❌ No hay token disponible, no se puede añadir proveedor.");
+                    return;
+                }
+
+                const options = {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(dataToSend)
+                };
+
+                try {
+                    const response = await fetch(uri, options);
+                    if (!response.ok) {
+                        console.error(`❌ Error al añadir proveedor: ${response.status}`);
+                        return;
+                    }
+
+                    console.log("✅ Proveedor añadido correctamente");
+                    getActions().getProviders(); // ✅ Actualiza la lista de proveedores
+                } catch (error) {
+                    console.error("❌ Error en addProvider:", error);
+                }
+            },
 			deleteProviders: async (providerId ) => {		
 				const uri = `${process.env.BACKEND_URL}/api/providers/${providerId}`;
 				const options = {
@@ -463,23 +503,37 @@ const getState = ({ getStore, getActions, setStore }) => {
 				setStore({alert: {text: 'Proveedor desactivado correctamente ', background: 'success', visible: true}})
 				getActions().getProviders();
 			},
-			editProvider: async (providerId, dataToSend) =>{
-				const uri= `${process.env.BACKEND_URL}/api/providers/${providerId}`;
-				const options = {
-					method: "PUT",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${localStorage.getItem('token')}`
-					},
-					body: JSON.stringify(dataToSend)
-				}
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					return;
-				}
-				setStore({alert: {text: 'Proveedor editado correctamente ', background: 'success', visible: true}})
-				getActions().getProviders()
-			},
+			editProvider: async (providerId, dataToSend) => {
+                const uri = `${process.env.BACKEND_URL}/api/providers/${providerId}`;
+                const token = localStorage.getItem("token");
+
+                if (!token) {
+                    console.error("❌ No hay token disponible, no se puede editar proveedor.");
+                    return;
+                }
+
+                const options = {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(dataToSend)
+                };
+
+                try {
+                    const response = await fetch(uri, options);
+                    if (!response.ok) {
+                        console.error(`❌ Error al editar proveedor: ${response.status}`);
+                        return;
+                    }
+
+                    console.log("✅ Proveedor editado correctamente");
+                    getActions().getProviders(); // ✅ Refrescar la lista de proveedores
+                } catch (error) {
+                    console.error("❌ Error en editProvider:", error);
+                }
+            },
 			getVehicles: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/vehicles`;
 				const options = {
@@ -546,6 +600,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				setStore({alert: {text: 'Vehículo editado correctamente ', background: 'success', visible: true}})
 				getActions().getVehicles()
 			},
+			
 			getOrders: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/orders`;
 				const options = {
@@ -591,7 +646,10 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return  
 				}
 			},
-			
+			toggleProviderStatus: async (provider) => {
+                const updatedData = { is_active: !provider.is_active };
+                await getActions().editProvider(provider.id, updatedData);
+            },
 		}
 	};
 };

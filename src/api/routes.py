@@ -376,7 +376,6 @@ def customer(id):
 
 
 @api.route('/providers', methods=['GET', 'POST'])
-# SOLO ADMIN PUEDE HACER GET DE TODOS Y POST - OK
 @jwt_required()
 def providers():
     response_body = {}
@@ -384,23 +383,25 @@ def providers():
     role = additional_claims.get("role")
     if role != 'admin':  # Solo los administradores pueden acceder
         response_body['message'] = 'Usuario no autorizado'
-        return response_body, 401 
+        return jsonify(response_body), 401 
+    # Verifica si se deben incluir inactivos
     include_inactive = request.args.get("include_inactive", "false").lower() == "true"
+    # Construir consulta para obtener proveedores
     query = db.select(Providers)
     if not include_inactive:
-        query = query.where(Providers.is_active == True)
+        query = query.where(Providers.is_active == True)  # Filtra por activos si no se solicita lo contrario
     if request.method == 'GET':
         rows = db.session.execute(query).scalars()
-        result = [row.serialize() for row in rows]
+        result = [row.serialize() for row in rows]  # Convertir cada proveedor en JSON
         response_body['message'] = "Listado de proveedores"
         response_body['results'] = result
-        return response_body, 200
+        return jsonify(response_body), 200
     if request.method == 'POST':
         data = request.json
-        prov_base_tariff = data.get("prov_base_tariff", 0.0)
+        prov_base_tariff = data.get("prov_base_tariff", 0.0)  
         new_provider = Providers(
             company_name=data.get("company_name"),
-            contact_name=data.get("contact_name"),  # dejar en blanco
+            contact_name=data.get("contact_name"),  # Puede quedar en blanco
             phone=data.get("phone"),
             address=data.get("address"),
             prov_base_tariff=prov_base_tariff,
@@ -409,7 +410,8 @@ def providers():
         db.session.commit()
         response_body['message'] = "Proveedor creado exitosamente"
         response_body['results'] = new_provider.serialize()
-        return response_body, 201
+        return jsonify(response_body), 201
+
 
 
 @api.route('/providers/<int:id>', methods=['GET', 'PUT', 'DELETE'])
@@ -436,6 +438,12 @@ def provider(id):
             provider.contact_name = data.get("contact_name", provider.contact_name)
             provider.phone = data.get("phone", provider.phone)
             provider.address = data.get("address", provider.address)
+            if "prov_base_tariff" in data:
+                try:
+                    provider.prov_base_tariff = float(data["prov_base_tariff"])  # ✅ Convertir a número
+                except ValueError:
+                    return jsonify({"message": "Valor inválido para prov_base_tariff"}), 400  # Manejo de error      
+            # ✅ Manejo del estado activo/inactivo
             if "is_active" in data:
                 provider.is_active = data["is_active"]  # Permitir activar/desactivar
             db.session.commit()

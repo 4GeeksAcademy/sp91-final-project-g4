@@ -1,75 +1,78 @@
-import React, { useContext, useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 import { Alert } from "../component/Alert.jsx";
 
-
 export const AddProvider = () => {
-    const { store, actions} = useContext(Context)
+    const { actions } = useContext(Context);
     const navigate = useNavigate();
 
-    const [ companyName, setCompanyName ] = useState("");
-    const [ contactName, setcontactName ] = useState("");
-    const [ phone, setPhone ] = useState("");
-    const [ address, setAddres ] = useState("");
-    const [ provBaseTariff, setProvBaseTariff ] = useState("");
+    // Estados para los campos del formulario
+    const [companyName, setCompanyName] = useState("");
+    const [contactName, setContactName] = useState("");
+    const [phone, setPhone] = useState("");
+    const [address, setAddress] = useState("");
+    const [provBaseTariff, setProvBaseTariff] = useState("");
 
-
-    const handleSubmitAdd = (event) =>{
+    // ✅ Función para enviar el formulario
+    const handleSubmitAdd = (event) => {
         event.preventDefault();
-        actions.setAlert({text: 'Proveedor agregado correctamente', background: 'primary', visible: true})
+        actions.setAlert({ text: 'Proveedor agregado correctamente', background: 'primary', visible: true });
+
         const dataToSend = {
-            company_name: companyName, contact_name: contactName, phone, address, prov_base_tariff: provBaseTariff
+            company_name: companyName,
+            contact_name: contactName,
+            phone,
+            address,
+            prov_base_tariff: provBaseTariff
         };
+
         actions.addProvider(dataToSend);
-        navigate("/admin/providers");
-    }
+        navigate("/admin/providers"); // ✅ Redirigir al listado de proveedores
+    };
 
-
-
+    // ✅ Función para cancelar y volver al listado
+    const handleCancel = () => {
+        navigate("/admin/providers"); // ✅ Redirigir al listado de proveedores
+    };
 
     return (
-        <div className="card container w-100 mt-5" style={{maxWidth: 500, padding: '1rem'}}>
-            <h1 className="h3 fw-bold text-center my-2 "> Alta de proveedores </h1>
-            <Alert/>
-            <form onSubmit={handleSubmitAdd}> 
+        <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
+            <h1 className="h3 fw-bold text-center my-2">Alta de proveedor</h1>
+            <Alert />
+            <form onSubmit={handleSubmitAdd}>
                 <div className="form-floating my-3">
-                <input type="companyName" className="form-control" id="floatingInput" placeholder="Company name"
-                        value={companyName}
-                        onChange={(event) => setCompanyName(event.target.value)} />
-                    <label htmlFor="floatingInput">Nombre de la empresa</label>
+                    <input type="text" className="form-control" placeholder="Nombre de la empresa"
+                        value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
+                    <label>Nombre de la empresa</label>
                 </div>
                 <div className="form-floating my-3">
-                    <input type="contactName" className="form-control" id="floatingInput" placeholder="Contact name"
-                        value={contactName}
-                        onChange={(event) => setcontactName(event.target.value)} />
-                    <label htmlFor="floatingInput">Persona de contacto</label>
+                    <input type="text" className="form-control" placeholder="Persona de contacto"
+                        value={contactName} onChange={(event) => setContactName(event.target.value)} />
+                    <label>Persona de contacto</label>
                 </div>
                 <div className="form-floating my-3">
-                    <input type="tel" className="form-control" id="floatingInput" placeholder="Phone"
-                        value={phone}
-                        onChange={(event) => setPhone(event.target.value)} />
-                    <label htmlFor="floatingInput">Teléfono</label>
+                    <input type="tel" className="form-control" placeholder="Teléfono"
+                        value={phone} onChange={(event) => setPhone(event.target.value)} />
+                    <label>Teléfono</label>
                 </div>
                 <div className="form-floating my-3">
-                    <input type="address" className="form-control" id="floatingInput" placeholder="Address"
-                        value={address}
-                        onChange={(event) => setAddres(event.target.value)} />
-                    <label htmlFor="floatingInput">Dirección</label>
+                    <input type="text" className="form-control" placeholder="Dirección"
+                        value={address} onChange={(event) => setAddress(event.target.value)} />
+                    <label>Dirección</label>
                 </div>
                 <div className="form-floating my-3">
-                    <input type="baseTariff" className="form-control" id="floatingInput" placeholder="Base tariff"
-                        value={provBaseTariff}
-                        onChange={(event) => setProvBaseTariff(event.target.value)} />
-                    <label htmlFor="floatingInput">Tarifa aplicada</label>
+                    <input type="number" step="0.01" className="form-control" placeholder="Tarifa aplicada"
+                        value={provBaseTariff} onChange={(event) => setProvBaseTariff(event.target.value)} />
+                    <label>Tarifa aplicada</label>
                 </div>
-                <button
-                    onSubmit={handleSubmitAdd}
-                    type="submit" className="btn btn-warning container my-3">Crear
-                </button>
+                
+                {/* ✅ Botón para Guardar */}
+                <button type="submit" className="btn btn-warning container my-3">Guardar</button>
 
+                {/* ✅ Botón para Cancelar */}
+                <button type="button" className="btn btn-secondary container" onClick={handleCancel}>Cancelar</button>
             </form>
         </div>
-
-    )
-}
+    );
+};

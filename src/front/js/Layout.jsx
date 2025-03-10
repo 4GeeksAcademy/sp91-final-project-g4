@@ -89,7 +89,7 @@ const Layout = () => {
                             <Route element={<ProviderOrders />} path="/provider-orders" />
                             <Route element={<ProviderProfile />} path="/provider-profile" />
                             <Route element={<AddProvider />} path="/add-provider" />
-                            <Route element={<EditProvider />} path="/admin/providers/admin/edit-provider" /> {/*  ¿Cual sería la URL correcta? */}
+                            <Route element={<EditProvider />} path="/admin/edit-provider" />
                             <Route element={<Vehicles />} path="/admin/vehicles" />
                             <Route element={<AddVehicle />} path="/add-vehicle" />
                             <Route element={<EditVehicle />} path="/admin/vehicles/admin/edit-vehicle" />
