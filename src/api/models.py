@@ -57,7 +57,7 @@ class Vehicles(db.Model):
     def calculate_corrector_cost(self):
         corrector_values = {
                             "Turism": 0.0,
-                            "Motorcylce": 0.0,
+                            "Motorcycle": 0.0,
                             "SUV": 0.2,
                             "4x4": 0.3,
                             "Van": 0.5,

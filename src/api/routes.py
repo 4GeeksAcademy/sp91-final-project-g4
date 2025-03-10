@@ -16,6 +16,21 @@ CORS(api)  # Allow CORS requests to this API
 # API Key de OpenRouteService para geolocalización (Debes reemplazarla con una válida)
 ORS_API_KEY = "5b3ce3597851110001cf624838efe49eff8748218b0a9b692f3fb14e"
 
+@api.route('/admins', methods=['GET'])
+@jwt_required()
+def get_admins():
+    """
+    Endpoint para obtener solo los usuarios con rol de administrador.
+    Solo los administradores pueden acceder a esta información.
+    """
+    additional_claims = get_jwt()
+    role = additional_claims.get("role")
+    if role != 'admin':  # Solo los administradores pueden acceder
+        return jsonify({"message": "Usuario no autorizado"}), 403
+    admins = db.session.execute(db.select(Users).where(Users.role == "admin", Users.is_active == True)).scalars()
+    result = [admin.serialize() for admin in admins]
+    return jsonify({"message": "Lista de administradores", "results": result}), 200
+
 @api.route("/calculate-distances", methods=["POST"])
 @jwt_required()  # Requiere autenticación JWT
 def calculate_distance():
@@ -330,6 +345,11 @@ def customer(id):
             customer.contact_name = data.get("contact_name", customer.contact_name)
             customer.phone = data.get("phone", customer.phone)
             customer.address = data.get("address", customer.address)
+            if "cust_base_tariff" in data:
+                try:
+                    customer.cust_base_tariff = float(data["cust_base_tariff"])  # ✅ Convertir a número
+                except ValueError:
+                    return jsonify({"message": "Invalid value for cust_base_tariff"}), 400  # Manejo de error
             if "is_active" in data:
                 customer.is_active = data["is_active"]  # Permitir activar/desactivar
             db.session.commit()
@@ -356,7 +376,6 @@ def customer(id):
 
 
 @api.route('/providers', methods=['GET', 'POST'])
-# SOLO ADMIN PUEDE HACER GET DE TODOS Y POST - OK
 @jwt_required()
 def providers():
     response_body = {}
@@ -364,23 +383,25 @@ def providers():
     role = additional_claims.get("role")
     if role != 'admin':  # Solo los administradores pueden acceder
         response_body['message'] = 'Usuario no autorizado'
-        return response_body, 401 
+        return jsonify(response_body), 401 
+    # Verifica si se deben incluir inactivos
     include_inactive = request.args.get("include_inactive", "false").lower() == "true"
+    # Construir consulta para obtener proveedores
     query = db.select(Providers)
     if not include_inactive:
-        query = query.where(Providers.is_active == True)
+        query = query.where(Providers.is_active == True)  # Filtra por activos si no se solicita lo contrario
     if request.method == 'GET':
         rows = db.session.execute(query).scalars()
-        result = [row.serialize() for row in rows]
+        result = [row.serialize() for row in rows]  # Convertir cada proveedor en JSON
         response_body['message'] = "Listado de proveedores"
         response_body['results'] = result
-        return response_body, 200
+        return jsonify(response_body), 200
     if request.method == 'POST':
         data = request.json
-        prov_base_tariff = data.get("prov_base_tariff", 0.0)
+        prov_base_tariff = data.get("prov_base_tariff", 0.0)  
         new_provider = Providers(
             company_name=data.get("company_name"),
-            contact_name=data.get("contact_name"),  # dejar en blanco
+            contact_name=data.get("contact_name"),  # Puede quedar en blanco
             phone=data.get("phone"),
             address=data.get("address"),
             prov_base_tariff=prov_base_tariff,
@@ -389,7 +410,8 @@ def providers():
         db.session.commit()
         response_body['message'] = "Proveedor creado exitosamente"
         response_body['results'] = new_provider.serialize()
-        return response_body, 201
+        return jsonify(response_body), 201
+
 
 
 @api.route('/providers/<int:id>', methods=['GET', 'PUT', 'DELETE'])
@@ -416,6 +438,12 @@ def provider(id):
             provider.contact_name = data.get("contact_name", provider.contact_name)
             provider.phone = data.get("phone", provider.phone)
             provider.address = data.get("address", provider.address)
+            if "prov_base_tariff" in data:
+                try:
+                    provider.prov_base_tariff = float(data["prov_base_tariff"])  # ✅ Convertir a número
+                except ValueError:
+                    return jsonify({"message": "Valor inválido para prov_base_tariff"}), 400  # Manejo de error      
+            # ✅ Manejo del estado activo/inactivo
             if "is_active" in data:
                 provider.is_active = data["is_active"]  # Permitir activar/desactivar
             db.session.commit()
@@ -493,20 +521,23 @@ def vehicle(id):
     if role != 'admin':
         response_body['message'] = 'Usuario no autorizado'
         return response_body, 401
-    if request.method == 'PUT':  # Hay que proteger el PUT - Get pueden todos
+    if request.method == 'PUT':  # ✅ Ahora permite actualizar `is_active`
         data = request.json
         vehicle.brand = data.get("brand", vehicle.brand)
         vehicle.model = data.get("model", vehicle.model)
-        vehicle.vehicle_type = data.get("vehicle_type", vehicle.vehicle_type)
+        vehicle.vehicle_type = data.get("vehicle_type", vehicle.vehicle_type)      
+        # permite activar/desactivar el vehículo
+        if "is_active" in data:
+            vehicle.is_active = data["is_active"]
         db.session.commit()
-        response_body['message'] = f'Vehicle {id} actualizado correctamente'
+        response_body['message'] = f'Vehiculo {id} actualizado correctamente'
         response_body['results'] = vehicle.serialize()
         return response_body, 200
     if request.method == 'DELETE':
         vehicle.is_active = False  # Deshabilita el vehículo en lugar de eliminarlo
         db.session.commit()
-        response_body['message'] = f'Vehicle {id} deshabilitado correctamente'
-        return response_body, 200 
+        response_body['message'] = f'Vehiculo {id} deshabilitado correctamente'
+        return response_body, 200
 
 
 @api.route('/vehicles-admin', methods=['POST'])
@@ -585,7 +616,7 @@ def location(id):
         response_body['results'] = location.serialize()
         return response_body, 200
     
-
+"""""
 @api.route('/order_documents', methods=['GET'])  # OK
 # GET - Solo Admin puede ver todos los documentos
 @jwt_required() 
@@ -601,7 +632,7 @@ def order_documents():
         response_body['message'] = "Documentación de los pedidos"
         response_body['results'] = result
         return jsonify(response_body), 200
-    """""
+    
     if request.method == 'POST':  
         if user_role not in ["provider", "admin"]:
             return jsonify({"message": "Access denied. Only providers and admins can manage order documents"}), 403
@@ -615,9 +646,8 @@ def order_documents():
         response_body['message'] = "Documentación creada exitosamente"
         response_body['results'] = new_document.serialize()
         return jsonify(response_body), 201"
-    """""
 
-
+        
 @api.route('/orders/<int:order_id>/add-document', methods=['POST'])  # PENDING
 # Endpoint para que proveedor o admin adjunten documentos al cambiar estado a init o end
 @jwt_required()
@@ -643,7 +673,7 @@ def add_order_document(order_id):
     response_body["order_document"] = new_document.serialize()
     return jsonify(response_body), 201
 
-
+    
 @api.route('/order_documents/<int:id>', methods=['GET', 'PUT', 'DELETE'])  # PENDING
 # DELETE - Solo Admin puede eliminar
 # GET - Cualquier usuario autenticado puede ver los documentos
@@ -680,7 +710,7 @@ def order_document_by_id(id):
         db.session.commit()
         response_body['message'] = f'Document {id} deleted successfully'
         return jsonify(response_body), 200
-    
+"""""    
 
 @api.route('/orders', methods=['GET', 'POST'])  # OK
 # admin ve lista de todas las ordenes
