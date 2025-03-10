@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
 
 
 export const Customers = () => {
@@ -11,7 +10,6 @@ export const Customers = () => {
 
     const handleDelete = async (customerId) => {
         actions.deleteCustomer(customerId)
-        actions.setAlert({text: 'Cliente desactivado correctamente', background: 'primary', visible: true})
 
     }
 

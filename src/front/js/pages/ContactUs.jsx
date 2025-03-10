@@ -29,7 +29,6 @@ export const ContactUs = () => {
         actions.addContact(dataToSend);
 
         // Después de enviar, redirigir o mostrar un mensaje de éxito
-        alert("¡Gracias por contactarnos! Nos pondremos en contacto contigo pronto.");
         navigate("/"); // Redirigir a la página principal o donde sea necesario
     };
 

@@ -7,26 +7,26 @@ export const UserProfile = () => {
     const { store, actions } = useContext(Context);
     const params = useParams();
     const navigate = useNavigate()
-console.log(params);
+    console.log(params);
 
-/*     const handleLogin = () => {
-        if (store.isLogged) {
-            actions.setIsLogged(false);
-            actions.setUser({});
-            navigate('/user-profile')
-        }else{
-            navigate('/login')
-        }
-    } */
+    /*     const handleLogin = () => {
+            if (store.isLogged) {
+                actions.setIsLogged(false);
+                actions.setUser({});
+                navigate('/user-profile')
+            }else{
+                navigate('/login')
+            }
+        } */
 
     const handleEdit = async (user) => {
         actions.setCurrentUser(user)
         navigate("/edit-user")
     }
 
-        useEffect(() => {
-            actions.getUser(store.user.id)
-        }, [])
+    useEffect(() => {
+        actions.getUser(store.user.id)
+    }, [])
 
     return (
         <div className="container bg-light mt-5">
@@ -39,7 +39,6 @@ console.log(params);
                             <p><strong>Last name:</strong> {store.user.last_name}</p>
                             <p><strong>Email:</strong> {store.user.email}</p>
                             <p><strong>Phone:</strong> {store.user.phone}</p>
-                            <p><strong>Tipo de usuario:</strong> {store.user.role}</p>
                         </div>
                     </div>
                     <button onClick={() => handleEdit(store.user)} className="btn btn-warning w-100 py-2 my-3" type="submit"> Editar datos </button>

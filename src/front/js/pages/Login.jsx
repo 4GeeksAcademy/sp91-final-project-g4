@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from "react";
 import { Context } from "../store/appContext";
 import "../../styles/home.css";
 import { Link, useNavigate } from "react-router-dom";
-import { Alert } from "../component/Alert.jsx";
 
 
 export const Login = () => {
@@ -17,7 +16,6 @@ export const Login = () => {
 
     const handleSignIn = async (event) =>{
         event.preventDefault();
-        actions.setAlert({text: '', background: 'primary', visible: false})
         const dataToSend = { email, password };
         await actions.login(dataToSend);
         if (store.isLogged){
@@ -30,7 +28,6 @@ export const Login = () => {
 
     return (
         <div className="card w-100 m-auto mt-5" style={{maxWidth: 330, padding: '1rem'}}>
-            <Alert/>
             <form onSubmit={handleSignIn} className="container">
                 <h1 className="h3 text-center my-2 fw-bold">Iniciar sesión</h1>
                 <div className="form-floating mb-2">

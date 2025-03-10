@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { Context } from "../store/appContext.js";
 import { Link, useNavigate } from "react-router-dom";
-import { Alert } from "../component/Alert.jsx";
 
 
 export const EditProvider = () => {
@@ -17,7 +16,6 @@ export const EditProvider = () => {
 
     const handleSubmitEdit = (event) => {
         event.preventDefault();
-        actions.setAlert({text: 'Proveedor editado correctamente', background: 'primary', visible: true})
         const dataToSend = {
             company_name: companyName, contact_name: contactName, phone, address, prov_base_tariff: provBaseTariff
         };
@@ -30,7 +28,6 @@ export const EditProvider = () => {
     return (
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
             <h1 className="h3 fw-bold text-center my-2 "> Editar datos de proveedor </h1>
-            <Alert/>
             <form onSubmit={handleSubmitEdit}>
                 <div className="form-floating my-3">
                     <input type="companyName" className="form-control" id="floatingInput" placeholder="Company name"

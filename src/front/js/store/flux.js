@@ -5,7 +5,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 		store: {
 			message: null,
 			isLogged: false,
-			alert: {text:'', background: 'primary', visible: 'false'},
 			user: {},
 			currentUser: {},
 			customers: [],
@@ -23,7 +22,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 		},
 		actions: {
 			setIsLogged: (value) => { setStore({ isLogged: value }) },
-			setAlert: (newAlert) => setStore({alert: newAlert}),
 			setUser: (currentUser) => {setStore({user: currentUser})},
 			setCurrentUser: (item) => {setStore({ currentUser: item})},
 			setCurrentCustomer: (customer) => { setStore({ currentCustomer: customer}) },
@@ -91,7 +89,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return
 				}
 				const data = await response.json()
-				setStore({alert: {text: data.message, background: 'success', visible: true}})
 			},
 			addUser: async (dataToSend) => {
 				const uri =`${process.env.BACKEND_URL}/api/users`
@@ -139,7 +136,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 				if (!response.ok) {
 					return;
 				}
-				setStore({alert: {text: 'Usuario editado correctamente ', background: 'success', visible: true}})
 
 				getActions().getUser(userId)
 			},
@@ -192,7 +188,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log('error:', response.status, response.statusText)
 					return  
 				}
-				setStore({alert: {text: 'Cliente agregado correctamente ', background: 'success', visible: true}})
 				getActions().getCustomers()
 			},
 			deleteCustomer: async (customerId) => {		
@@ -208,7 +203,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log('error:', response.status, response.statusText)
 					return
 				}
-				setStore({alert: {text: 'Cliente desactivado correctamente ', background: 'success', visible: true}})
 				getActions().getCustomers();
 			},
 			editCustomer: async (customerId, dataToSend) =>{
@@ -225,8 +219,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 				if (!response.ok) {
 					return;
 				}
-				setStore({alert: {text: 'Cliente editado correctamente ', background: 'success', visible: true}})
-
 				getActions().getCustomers()
 			},
 			getProviders: async () => {
@@ -294,7 +286,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("error", response.status, response.statusText);
 					return
 				}
-				setStore({alert: {text: 'Proveedor desactivado correctamente ', background: 'success', visible: true}})
 				getActions().getProviders();
 			},
 			editProvider: async (providerId, dataToSend) =>{
@@ -311,7 +302,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 				if (!response.ok) {
 					return;
 				}
-				setStore({alert: {text: 'Proveedor editado correctamente ', background: 'success', visible: true}})
 				getActions().getProviders()
 			},
 			getVehicles: async () => {
@@ -344,7 +334,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log('error:', response.status, response.statusText)
 					return  
 				}
-				setStore({alert: {text: 'Vehículo agregado correctamente ', background: 'success', visible: true}})
 				getActions().getVehicles()
 			},
 			deleteVehicle: async (vehicleId) => {		
@@ -360,7 +349,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("error", response.status, response.statusText);
 					return
 				}
-				setStore({alert: {text: 'Vehículo eliminado correctamente ', background: 'success', visible: true}})
 				getActions().getVehicles();
 			},
 			editVehicle: async (vehicleId, dataToSend) =>{
@@ -377,7 +365,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 				if (!response.ok) {
 					return;
 				}
-				setStore({alert: {text: 'Vehículo editado correctamente ', background: 'success', visible: true}})
 				getActions().getVehicles()
 			},
 			getOrders: async () => {
@@ -425,6 +412,32 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return  
 				}
 			},
+			updateOrderProvider: async (orderId, dataToSend) => {
+				const store = getStore();
+				
+				const updatedOrder = {
+					...store.currentOrder,
+					provider_id: dataToSend.provider_id
+				};
+				
+				setStore({ currentOrder: dataToSend });
+			
+				const uri = `${process.env.BACKEND_URL}/api/orders/${orderId}`;
+				const options = {
+					method: "PUT",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${localStorage.getItem('token')}`
+					},
+					body: JSON.stringify(updatedOrder)
+				};
+				const response = await fetch(uri, options);
+				if (!response.ok) {
+					console.log("Error:", response.status, response.statusText);
+					return;
+				}
+				getActions().getOrders(); 
+			}
 			
 		}
 	};

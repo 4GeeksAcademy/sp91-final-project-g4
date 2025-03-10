@@ -5,7 +5,6 @@ import injectContext from "./store/appContext.js";
 // Custom components
 
 import { MainNavbar } from "./component/MainNavbar.jsx";
-import { Alert } from "./component/Alert.jsx";
 import 'react-toastify/dist/ReactToastify.css';
 import { Footer } from "./component/Footer.jsx";
 import ScrollToTop from "./component/ScrollToTop.jsx";

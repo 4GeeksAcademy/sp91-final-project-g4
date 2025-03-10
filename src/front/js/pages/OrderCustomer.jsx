@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
 
 export const OrderCustomer = () => {
     const navigate = useNavigate();
@@ -61,10 +60,10 @@ export const OrderCustomer = () => {
                     providerContact: provider ? provider.contact_name : "Desconocido",
                     model: vehicle ? vehicle.model : "Desconocido",
                     brand: vehicle ? vehicle.brand : "Desconocido",
-                    origin: originLocation ? originLocation.name : "Desconocido",
+                    origin: originLocation ? originLocation.city : "Desconocido",
                     origin_zip: originLocation ? originLocation.postal_code: "Desconocido",
                     destiny_zip: destinationLocation ? destinationLocation.postal_code: "Desconocido",
-                    destination: destinationLocation ? destinationLocation.name : "Desconocido",
+                    destination: destinationLocation ? destinationLocation.city : "Desconocido",
                     regionOrigin: originLocation ? originLocation.region : "Desconocido",
                     regionDestiny: destinationLocation ? destinationLocation.region : "Desconocido",
                 };
@@ -91,9 +90,9 @@ export const OrderCustomer = () => {
                     <table className="table table-info">
                         <thead>
                             <tr>
-                            <th scope="col">Fecha de pedido</th>
                                 <th scope="col">Cliente</th>
                                 <th scope="col">Proveedor</th>
+                                <th scope="col">Fecha de creación del pedido</th>
                                 <th scope="col">Fecha estimada de entrega</th>
                                 <th scope="col">Origen</th>
                                 <th scope="col">Destino</th>

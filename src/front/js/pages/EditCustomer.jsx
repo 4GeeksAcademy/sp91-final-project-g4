@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Context } from "../store/appContext.js";
 import { Link, useNavigate } from "react-router-dom";
-import { Alert } from "../component/Alert.jsx";
 
 
 
@@ -20,7 +19,6 @@ export const EditCustomer = () => {
 
     const handleSubmitEdit = (event) => {
         event.preventDefault();
-        actions.setAlert({text: 'Cliente editado correctamente', background: 'primary', visible: true})
         const dataToSend = {
             company_name: companyName, contact_name: contactName, phone, address, cust_base_tariff: custBaseTariff
         };
@@ -32,7 +30,6 @@ export const EditCustomer = () => {
     return (
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
             <h1 className="h3 fw-bold text-center my-2 "> Editar datos de cliente </h1>
-            <Alert/>
             <form onSubmit={handleSubmitEdit}>
                 <div className="form-floating my-3">
                     <input type="companyName" className="form-control" id="floatingInput" placeholder="Company name"

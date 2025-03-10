@@ -1,7 +1,6 @@
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
 
 
 export const AddVehicle = () => {
@@ -16,7 +15,6 @@ export const AddVehicle = () => {
 
     const handleSubmitAdd = (event) => {
         event.preventDefault();
-        actions.setAlert({text: 'Vehículo agregado correctamente', background: 'primary', visible: true})
         const dataToSend = {
             brand, model, vehicle_type: vehicleType
         };
@@ -28,7 +26,6 @@ export const AddVehicle = () => {
     return (
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
             <h1 className="h3 fw-bold text-center my-2 "> Alta de vehículo </h1>
-            <Alert/>
             <form onSubmit={handleSubmitAdd}>
                 <div className="form-floating my-3">
                     <input type="brand" className="form-control" id="floatingInput" placeholder="Brand"
