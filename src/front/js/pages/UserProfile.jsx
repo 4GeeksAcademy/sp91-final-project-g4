@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
 import { AddAdminModal } from "../pages/AddAdminModal.jsx";
 
 export const UserProfile = () => {
@@ -46,7 +45,6 @@ export const UserProfile = () => {
         <div className="container mt-5">
             <div className="card p-4 shadow">
                 <h1 className="h3 fw-bold text-center my-2">Mis Datos</h1>
-                <Alert />
                 <form>
                     <div className="form-floating my-3">
                         <input type="text" className="form-control" placeholder="Nombre"

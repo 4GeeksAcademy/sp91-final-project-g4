@@ -18,11 +18,11 @@ export const Customers = () => {
     const handleToggleStatus = async (customer) => {
         const updatedData = { is_active: !customer.is_active }; // 🔄 Alternar estado
         await actions.editCustomer(customer.id, updatedData);
-        actions.setAlert({ 
+       /*  actions.setAlert({ 
             text: `Cliente ${customer.is_active ? "desactivado" : "activado"} correctamente`, 
             background: "primary", 
             visible: true 
-        });
+        }); */
     };
 
     const handleEdit = async (customer) => {

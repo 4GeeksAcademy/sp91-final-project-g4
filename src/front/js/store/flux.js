@@ -6,7 +6,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 			message: null,
 			isLogged: false,
 			token: localStorage.getItem('token') || null, // 🔹 Guarda el token
-			alert: { text: '', background: 'primary', visible: 'false' },
 			user: {},
 			admins: [], // 🔹 Añadir lista de administradores
 			currentUser: {},
@@ -567,7 +566,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					if (!response.ok) {
 						throw new Error(`Error ${response.status}: ${response.statusText}`);
 					}
-					setStore({ alert: { text: 'Vehículo agregado correctamente', background: 'success', visible: true } });
 					getActions().getVehicles();
 				} catch (error) {
 					console.error("❌ Error en addVehicle:", error);
@@ -629,7 +627,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					if (!response.ok) {
 						throw new Error(`Error ${response.status}: ${response.statusText}`);
 					}
-					setStore({ alert: { text: `Vehículo ${currentStatus ? "desactivado" : "activado"} correctamente`, background: 'primary', visible: true } });
 					getActions().getVehicles(); // ✅ Recargar lista después de cambio de estado
 				} catch (error) {
 					console.error("❌ Error en toggleVehicleStatus:", error);

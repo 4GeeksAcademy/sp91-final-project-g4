@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Context } from "../store/appContext.js";
 import { useNavigate } from "react-router-dom";
-import { Alert } from "../component/Alert.jsx";
 import { AddCustomerUserModal } from "../pages/AddCustomerUserModal.jsx"; // ✅ Importación del modal
 
 export const EditCustomer = () => {
@@ -25,8 +24,6 @@ export const EditCustomer = () => {
 
     const handleSubmitEdit = (event) => {
         event.preventDefault();
-        actions.setAlert({ text: "Cliente editado correctamente", background: "primary", visible: true });
-
         const dataToSend = {
             company_name: companyName,
             contact_name: contactName,
@@ -58,7 +55,6 @@ export const EditCustomer = () => {
         <div className="container mt-5">
             <div className="card p-4 shadow">
                 <h1 className="h3 fw-bold text-center my-2">Editar datos de cliente</h1>
-                <Alert />
                 <form onSubmit={handleSubmitEdit}>
                     <div className="form-floating my-3">
                         <input type="text" className="form-control" placeholder="Company name"

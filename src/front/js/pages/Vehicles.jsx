@@ -24,11 +24,11 @@ export const Vehicles = () => {
             console.log("✅ Estado cambiado con éxito");
     
             // 🔹 Actualiza inmediatamente el estado local en el frontend
-            actions.setAlert({ 
+            /* actions.setAlert({ 
                 text: `Vehículo ${vehicle.is_active ? "desactivado" : "activado"} correctamente`, 
                 background: "primary", 
                 visible: true 
-            });
+            }); */
         } else {
             console.error("❌ No se pudo cambiar el estado del vehículo.");
         }
