@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import getState from "./flux.js";
+import { jwtDecode } from "jwt-decode";
 
 
 // Don't change, here is where we initialize our context, by default it's just going to be null.
@@ -29,7 +30,16 @@ const injectContext = PassedComponent => {
 		  store, instead use actions, like this:
 		*/
 		useEffect(() => {
-			state.actions.getMessage();  // Calling this function from the flux.js actions
+			/* state.actions.getMessage(); */  // Calling this function from the flux.js actions
+			state.actions.getVehicles(); 
+			const token = localStorage.getItem('token')
+			if (token){
+				const decodeToken = jwtDecode(token)
+				console.log(decodeToken.user_id);
+				state.actions.setIsLogged(true);
+				state.actions.getUser(decodeToken.user_id)
+				
+			}
 		}, []);
 
 		// The initial value for the context is not null anymore, but the current state of this component,
