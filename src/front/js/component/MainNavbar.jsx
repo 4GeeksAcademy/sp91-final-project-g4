@@ -38,7 +38,7 @@ export const MainNavbar = () => {
               <Nav.Link as={Link} to="/services">Nuestros servicios</Nav.Link>
               <Nav.Link as={Link} to="/contact-us">Contacta con nosotros</Nav.Link>
               {store.isLogged && (
-                <NavDropdown title={store.user.name || "Usuario"} align="end">
+                <NavDropdown title={store.user.name} align="end">
                   {store.user.role === "customer" && (
                     <>
                       <NavDropdown.Item as={Link} to="/customer-dashboard">Mi pagina cliente</NavDropdown.Item>

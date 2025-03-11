@@ -64,10 +64,10 @@ export const OrderProvider = () => {
                     providerContact: provider ? provider.contact_name : "Desconocido",
                     model: vehicle ? vehicle.model : "Desconocido",
                     brand: vehicle ? vehicle.brand : "Desconocido",
-                    origin: originLocation ? originLocation.name : "Desconocido",
+                    origin: originLocation ? originLocation.city : "Desconocido",
                     origin_zip: originLocation ? originLocation.postal_code: "Desconocido",
                     destiny_zip: destinationLocation ? destinationLocation.postal_code: "Desconocido",
-                    destination: destinationLocation ? destinationLocation.name : "Desconocido",
+                    destination: destinationLocation ? destinationLocation.city : "Desconocido",
                     regionOrigin: originLocation ? originLocation.region : "Desconocido",
                     regionDestiny: destinationLocation ? destinationLocation.region : "Desconocido",
                 };
