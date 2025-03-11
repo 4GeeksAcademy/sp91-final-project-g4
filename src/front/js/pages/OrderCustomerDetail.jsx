@@ -1,16 +1,31 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
+import { toast } from "react-toastify";
 
 export const OrderCustomerDetail = () => {
     const navigate = useNavigate();
-    const { store } = useContext(Context);
+    const { store, actions } = useContext(Context);
     const location = useLocation();
     const order = location.state?.order;
 
     if (!order) {
         return <p>No hay detalles disponibles.</p>;
     }
+
+    const handleSubmitEdit = (event) => {
+        event.preventDefault();
+
+        if (!selectedProvider) {
+            toast.error("Por favor, selecciona un proveedor antes de continuar.");
+            return;
+        }
+        const dataToSend = {
+            ...order,
+            provider_id: selectedProvider,
+        };
+        actions.updateOrderProvider(order.id, dataToSend);
+    };
 
     return (
         <div className="container-fluid p-0 mb-3">
@@ -71,6 +86,34 @@ export const OrderCustomerDetail = () => {
                     </div>
 
 
+                    <div className="col-md-12">
+                        <div className="card p-3 mb-3">
+                            <h5 className="btn btn-secondary disabled rounded text-center">TARIFA</h5>
+                            <table className="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td>Kilómetros</td>
+                                        <td>{order.distance_km || "N/A"} km</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tarifa base</td>
+                                        <td>{order.cust_base_tariff || "N/A"} €/km</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Traslado: {order.origin} - {order.destination}</td>
+                                        <td>{order.final_cost || "N/A"} €</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Suplemento tipo de vehículo</td>
+                                        <td>{order.corrector_cost || "0"} €</td>
+                                    </tr>
+                                    <tr className="table-success">
+                                        <td><strong>TARIFA (IVA no incluido)</strong></td>
+                                        <td><strong>{order.final_cost || "N/A"} €</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     <div className="col-md-12">
                         <div className="card p-3 mb-3">
                             <h5 className="btn btn-secondary disabled rounded text-center">TARIFA</h5>

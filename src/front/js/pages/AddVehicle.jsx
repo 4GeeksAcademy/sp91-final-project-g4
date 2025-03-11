@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 
 
+
 export const AddVehicle = () => {
     const { actions } = useContext(Context);
     const navigate = useNavigate();
@@ -14,6 +15,9 @@ export const AddVehicle = () => {
     // ✅ Función para agregar vehículo
     const handleSubmitAdd = (event) => {
         event.preventDefault();
+        const dataToSend = {
+            brand, model, vehicle_type: vehicleType
+        };
         const dataToSend = {
             brand, model, vehicle_type: vehicleType
         };
@@ -33,6 +37,7 @@ export const AddVehicle = () => {
             </header>
 
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
+            <h1 className="h3 fw-bold text-center my-2 "> Alta de vehículo </h1>
             <h1 className="h3 fw-bold text-center my-2 "> Alta de vehículo </h1>
             <form onSubmit={handleSubmitAdd}>
                 <div className="form-floating my-3">
@@ -61,6 +66,8 @@ export const AddVehicle = () => {
                 <button type="submit" className="btn btn-warning container my-3">Crear</button>
                 <button type="button" className="btn btn-secondary container" onClick={handleCancel}>Cancelar</button>
             </form>
+        </div>
+    </div>
         </div>
     </div>
     );

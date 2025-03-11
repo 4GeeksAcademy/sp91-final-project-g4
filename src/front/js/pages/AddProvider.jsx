@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 
 
+
 export const AddProvider = () => {
     const { actions } = useContext(Context);
     const navigate = useNavigate();
@@ -75,6 +76,8 @@ export const AddProvider = () => {
                 {/* ✅ Botón para Cancelar */}
                 <button type="button" className="btn btn-secondary container" onClick={handleCancel}>Cancelar</button>
             </form>
+        </div>
+    </div>
         </div>
     </div>
     );

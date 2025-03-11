@@ -25,6 +25,7 @@ import { CustomerOrders } from "./pages/CustomerOrders.jsx";
 import { EditCustomer } from "./pages/EditCustomer.jsx";
 import { AddCustomer } from "./pages/AddCustomer.jsx";
 import { AddCustomerOrder } from "./pages/AddCustomerOrder.jsx";
+import { AddCustomerOrder } from "./pages/AddCustomerOrder.jsx";
 import { Providers } from "./pages/Providers.jsx";
 import { ProviderDashboard } from "./pages/ProviderDashboard.jsx";
 import { ProviderOrders } from "./pages/ProviderOrders.jsx";
@@ -99,6 +100,7 @@ const Layout = () => {
                             <Route element={<OrderProviderDetail />} path="/admin/order-provider-detail" />
                             <Route element={<UserProfile />} path="/admin-profile" />
                             <Route element={<AddAdminModal show={true} onClose={() => navigate("/admin-profile")} />} path="/add-admin" />
+                            <Route path="*" element={<h1>Not found!</h1>} />
                             <Route path="*" element={<h1>Not found!</h1>} />
 
                         </Routes>

@@ -4,6 +4,7 @@ import { Context } from "../store/appContext.js";
 export const AddCustomerUserModal = ({ show, onClose, customerId, userData }) => {
     const { actions } = useContext(Context);
 
+
     // Estados del formulario
     const [name, setName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -111,6 +112,8 @@ export const AddCustomerUserModal = ({ show, onClose, customerId, userData }) =>
                     </div>
                 </div>
             )}
+                </>
+            );
                 </>
             );
 };
