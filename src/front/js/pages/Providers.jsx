@@ -23,6 +23,13 @@ export const Providers = () => {
     };
 
     return (
+
+        <div className="container-fluid p-0">
+        <header className="bg-secondary text-white text-center py-5">
+            <h1 className="display-4">Proveedores</h1>
+            <p className="lead">Gestion de proveedores y consulta de información </p>
+        </header>
+
         <div className="container-fluid">
             <div className="container my-2 pb-5">
                 <div className="d-flex justify-content-between mx-3">
@@ -72,6 +79,7 @@ export const Providers = () => {
                 </div>
             </div>
         </div>
+    </div>
     );
 };
 

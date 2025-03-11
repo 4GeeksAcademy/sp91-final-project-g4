@@ -14,6 +14,7 @@ export const ProviderProfile = () => {
     return (
         <div className="container bg-light mt-5">
             <h1 className="text-secondary text-center">Perfil de Proveedor</h1>
+            <p className="lead">Gestion de datos personales y de usuarios  </p>
 
             {store.provider ? (
                 <>
