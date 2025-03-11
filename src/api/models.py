@@ -46,13 +46,15 @@ class Vehicles(db.Model):
     brand = db.Column(db.String(120), nullable=False)
     model = db.Column(db.String(80), nullable=False)
     vehicle_type = db.Column(db.Enum('Turism', 'Motorcycle', 'SUV', '4x4', 'Van', 'Extra van', name='vehicles_type'), nullable=False)
-    corrector_cost = db.Column(db.Float(), nullable=False)
+    corrector_cost = db.Column(db.Float(), default=0.0)
+    is_active = db.Column(db.Boolean, default=True)
 
-    def __init__(self, brand, model, vehicle_type):
+    def __init__(self, brand, model, vehicle_type, is_active):
         self.brand = brand
         self.model = model
         self.vehicle_type = vehicle_type
         self.corrector_cost = self.calculate_corrector_cost()
+        self.is_active = is_active
 
     def calculate_corrector_cost(self):
         corrector_values = {
@@ -70,7 +72,8 @@ class Vehicles(db.Model):
             "brand": self.brand,
             "model": self.model,
             "vehicle_type": self.vehicle_type,
-            "corrector_cost": self.corrector_cost}
+            "corrector_cost": self.corrector_cost if self.corrector_cost is not None else 0.0,
+            "is_active": self.is_active}
 
 
 class Customers(db.Model):

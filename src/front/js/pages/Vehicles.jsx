@@ -62,7 +62,7 @@ export const Vehicles = () => {
                                     <th>{item.brand}</th>
                                     <td>{item.model}</td>
                                     <td>{item.vehicle_type}</td>
-                                    <td>{item.corrector_cost || "N/A"}</td>
+                                    <td>{item.corrector_cost !== null && item.corrector_cost !== undefined ? item.corrector_cost : "0.0"}</td>
                                     <td>{item.is_active ? "Activo" : "Inactivo"}</td>
                                     <td>
                                         <button onClick={() => handleEdit(item)} type="button" className="btn btn-secondary">

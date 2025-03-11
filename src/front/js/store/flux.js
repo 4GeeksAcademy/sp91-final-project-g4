@@ -337,23 +337,47 @@ const getState = ({ getStore, getActions, setStore }) => {
 			},
 			
 			addCustomer: async (dataToSend) => {
-				const uri =`${process.env.BACKEND_URL}/api/customers`
+				const uri = `${process.env.BACKEND_URL}/api/customers`;
+				const store = getStore();
+				const token = store.token || localStorage.getItem("token"); // ✅ Asegurar que siempre use el token correcto
+			
+				if (!token) {
+					console.error("❌ No hay token disponible, no se puede agregar cliente.");
+					return false;
+				}
+			
 				const options = {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
-						Authorization: `Bearer ${localStorage.getItem('token')}`	
+						Authorization: `Bearer ${token}` // ✅ Usar la variable `token` obtenida
 					},
 					body: JSON.stringify(dataToSend)
+				};
+			
+				try {
+					const response = await fetch(uri, options);
+					
+					if (!response.ok) {
+						const errorData = await response.json(); // 🔹 Captura el error del backend
+						console.error(`❌ Error al agregar cliente: ${response.status}`, errorData);
+						return false;
+					}
+			
+					const data = await response.json();
+					console.log("✅ Cliente agregado correctamente:", data);
+			
+					setStore({ alert: { text: 'Cliente agregado correctamente', background: 'success', visible: true } });
+			
+					getActions().getCustomers(); // 🔹 Actualiza la lista de clientes
+			
+					return true; // ✅ Retornar `true` indica éxito
+				} catch (error) {
+					console.error("❌ Error en addCustomer:", error);
+					return false;
 				}
-				const response = await fetch(uri, options);
-				if (!response.ok) {
-					console.log('error:', response.status, response.statusText)
-					return  
-				}
-				setStore({alert: {text: 'Cliente agregado correctamente ', background: 'success', visible: true}})
-				getActions().getCustomers()
 			},
+			
 			deleteCustomer: async (customerId) => {
 				const uri = `${process.env.BACKEND_URL}/api/customers/${customerId}`;
 				const options = {
