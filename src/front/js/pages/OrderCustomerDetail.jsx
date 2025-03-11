@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 import { toast } from "react-toastify";
 
+
 export const OrderCustomerDetail = () => {
     const navigate = useNavigate();
     const { store, actions } = useContext(Context);
@@ -12,20 +13,6 @@ export const OrderCustomerDetail = () => {
     if (!order) {
         return <p>No hay detalles disponibles.</p>;
     }
-
-    const handleSubmitEdit = (event) => {
-        event.preventDefault();
-
-        if (!selectedProvider) {
-            toast.error("Por favor, selecciona un proveedor antes de continuar.");
-            return;
-        }
-        const dataToSend = {
-            ...order,
-            provider_id: selectedProvider,
-        };
-        actions.updateOrderProvider(order.id, dataToSend);
-    };
 
     return (
         <div className="container-fluid p-0 mb-3">

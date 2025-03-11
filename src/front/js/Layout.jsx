@@ -100,7 +100,6 @@ const Layout = () => {
                             <Route element={<UserProfile />} path="/admin-profile" />
                             <Route element={<AddAdminModal show={true} onClose={() => navigate("/admin-profile")} />} path="/add-admin" />
                             <Route path="*" element={<h1>Not found!</h1>} />
-                            <Route path="*" element={<h1>Not found!</h1>} />
 
                         </Routes>
                         <Footer />

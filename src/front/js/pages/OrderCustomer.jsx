@@ -10,24 +10,17 @@ export const OrderCustomer = () => {
         navigate("/admin/order-customer-detail", { state: { order } });
     };
 
-    const handleAddOrder = () => {
-        navigate("/admin/add-customer-order");
-        const handleAddOrder = () => {
-            navigate("/admin/add-customer-order");
-        };
-
         const [ordersData, setOrdersData] = useState([]);
 
-        useEffect(() => {
-            const fetchData = async () => {
-                await actions.getCustomers();
-                await actions.getProviders();
-                await actions.getOrders();
-                await actions.getVehicles();
-                await actions.getLocations();
-                await actions.getVehicles();
-                await actions.getLocations();
-            };
+    useEffect(() => {
+        const fetchData = async () => {
+            await actions.getCustomers();
+            await actions.getProviders();
+            await actions.getOrders();
+            await actions.getVehicles();
+            await actions.getLocations();
+        };
+
 
             fetchData();
         }, []);
@@ -148,4 +141,4 @@ export const OrderCustomer = () => {
     
         );
     };
-};
+

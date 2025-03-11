@@ -35,7 +35,6 @@ export const AddVehicle = () => {
 
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
             <h1 className="h3 fw-bold text-center my-2 "> Alta de vehículo </h1>
-            <h1 className="h3 fw-bold text-center my-2 "> Alta de vehículo </h1>
             <form onSubmit={handleSubmitAdd}>
                 <div className="form-floating my-3">
                     <input type="text" className="form-control" id="floatingInput" placeholder="Marca"
