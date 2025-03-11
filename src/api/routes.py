@@ -556,7 +556,8 @@ def vehicles_admin():
             new_vehicle = Vehicles(
                 brand=data.get("brand"),
                 model=data.get("model"),
-                vehicle_type=data.get("vehicle_type"))
+                vehicle_type=data.get("vehicle_type"),
+                is_active=data.get("is_active", True))
             db.session.add(new_vehicle)
             db.session.commit()
         response_body['message'] = " Vehiculo creado exitosamente"
@@ -616,101 +617,6 @@ def location(id):
         response_body['results'] = location.serialize()
         return response_body, 200
     
-"""""
-@api.route('/order_documents', methods=['GET'])  # OK
-# GET - Solo Admin puede ver todos los documentos
-@jwt_required() 
-def order_documents():
-    response_body = {}
-    claims = get_jwt()
-    user_role = claims.get("role")   
-    if request.method == 'GET':
-        if user_role != "admin":
-            return jsonify({"message": "Access denied. Only admin can view order documents"}), 403
-        rows = db.session.execute(db.select(OrderDocuments)).scalars()
-        result = [row.serialize() for row in rows]
-        response_body['message'] = "Documentación de los pedidos"
-        response_body['results'] = result
-        return jsonify(response_body), 200
-    
-    if request.method == 'POST':  
-        if user_role not in ["provider", "admin"]:
-            return jsonify({"message": "Access denied. Only providers and admins can manage order documents"}), 403
-        data = request.json
-        new_document = OrderDocuments(
-            document_type=data.get("document_type"),
-            document_url=data.get("document_url"),
-            order_id=data.get("order_id"))
-        db.session.add(new_document)
-        db.session.commit()
-        response_body['message'] = "Documentación creada exitosamente"
-        response_body['results'] = new_document.serialize()
-        return jsonify(response_body), 201"
-
-        
-@api.route('/orders/<int:order_id>/add-document', methods=['POST'])  # PENDING
-# Endpoint para que proveedor o admin adjunten documentos al cambiar estado a init o end
-@jwt_required()
-def add_order_document(order_id):
-    response_body = {}
-    claims = get_jwt()
-    user_role = claims.get("role")   
-    if user_role not in ["provider", "admin"]:  # Solo proveedores y administradores pueden adjuntar documentos
-        return jsonify({"message": "Only providers and admins can add documents"}), 403
-    order = db.session.get(Orders, order_id)
-    if not order:
-        return jsonify({"message": "Order not found"}), 404   
-    if order.status_order not in ["init", "end"]:  # Verificar que el estado de la orden es "init" o "end"
-        return jsonify({"message": "Documents can only be added when order status is 'init' or 'end'"}), 400
-    data = request.json
-    new_document = OrderDocuments(
-        document_type=data.get("document_type"),
-        document_url=data.get("document_url"),
-        order_id=order.id)
-    db.session.add(new_document)
-    db.session.commit()
-    response_body["message"] = "Document added successfully"
-    response_body["order_document"] = new_document.serialize()
-    return jsonify(response_body), 201
-
-    
-@api.route('/order_documents/<int:id>', methods=['GET', 'PUT', 'DELETE'])  # PENDING
-# DELETE - Solo Admin puede eliminar
-# GET - Cualquier usuario autenticado puede ver los documentos
-# PUT - Solo Admin puede modificar
-@jwt_required()
-def order_document_by_id(id):
-    response_body = {}
-    claims = get_jwt()
-    user_role = claims.get("role")
-    order_document = db.session.get(OrderDocuments, id)  # Buscar el documento por ID
-    if not order_document:
-        response_body['message'] = 'Order document not found'
-        return jsonify(response_body), 404   
-    if request.method == 'GET':
-        if user_role not in ["admin", "customer", "provider"]:
-            return jsonify({"message": "Access denied."}), 403
-        response_body['message'] = f'Document {id} retrieved successfully'
-        response_body['results'] = order_document.serialize()
-        return jsonify(response_body), 200  
-    if request.method == 'PUT':
-        if user_role != "admin":
-            return jsonify({"message": "Access denied. Only admin can update documents."}), 403
-        data = request.json
-        order_document.document_type = data.get("document_type", order_document.document_type)
-        order_document.document_url = data.get("document_url", order_document.document_url)
-        db.session.commit()
-        response_body['message'] = f'Document {id} updated successfully'
-        response_body['results'] = order_document.serialize()
-        return jsonify(response_body), 200
-    if request.method == 'DELETE':
-        if user_role != "admin":
-            return jsonify({"message": "Access denied. Only admin can delete documents."}), 403
-        db.session.delete(order_document)
-        db.session.commit()
-        response_body['message'] = f'Document {id} deleted successfully'
-        return jsonify(response_body), 200
-"""""    
 
 @api.route('/orders', methods=['GET', 'POST'])  # OK
 # admin ve lista de todas las ordenes
@@ -934,3 +840,99 @@ def add_contact():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "Contacto ya registrado"}), 500
+    
+"""""
+@api.route('/order_documents', methods=['GET'])  # OK
+# GET - Solo Admin puede ver todos los documentos
+@jwt_required() 
+def order_documents():
+    response_body = {}
+    claims = get_jwt()
+    user_role = claims.get("role")   
+    if request.method == 'GET':
+        if user_role != "admin":
+            return jsonify({"message": "Access denied. Only admin can view order documents"}), 403
+        rows = db.session.execute(db.select(OrderDocuments)).scalars()
+        result = [row.serialize() for row in rows]
+        response_body['message'] = "Documentación de los pedidos"
+        response_body['results'] = result
+        return jsonify(response_body), 200
+    
+    if request.method == 'POST':  
+        if user_role not in ["provider", "admin"]:
+            return jsonify({"message": "Access denied. Only providers and admins can manage order documents"}), 403
+        data = request.json
+        new_document = OrderDocuments(
+            document_type=data.get("document_type"),
+            document_url=data.get("document_url"),
+            order_id=data.get("order_id"))
+        db.session.add(new_document)
+        db.session.commit()
+        response_body['message'] = "Documentación creada exitosamente"
+        response_body['results'] = new_document.serialize()
+        return jsonify(response_body), 201"
+
+        
+@api.route('/orders/<int:order_id>/add-document', methods=['POST'])  # PENDING
+# Endpoint para que proveedor o admin adjunten documentos al cambiar estado a init o end
+@jwt_required()
+def add_order_document(order_id):
+    response_body = {}
+    claims = get_jwt()
+    user_role = claims.get("role")   
+    if user_role not in ["provider", "admin"]:  # Solo proveedores y administradores pueden adjuntar documentos
+        return jsonify({"message": "Only providers and admins can add documents"}), 403
+    order = db.session.get(Orders, order_id)
+    if not order:
+        return jsonify({"message": "Order not found"}), 404   
+    if order.status_order not in ["init", "end"]:  # Verificar que el estado de la orden es "init" o "end"
+        return jsonify({"message": "Documents can only be added when order status is 'init' or 'end'"}), 400
+    data = request.json
+    new_document = OrderDocuments(
+        document_type=data.get("document_type"),
+        document_url=data.get("document_url"),
+        order_id=order.id)
+    db.session.add(new_document)
+    db.session.commit()
+    response_body["message"] = "Document added successfully"
+    response_body["order_document"] = new_document.serialize()
+    return jsonify(response_body), 201
+
+    
+@api.route('/order_documents/<int:id>', methods=['GET', 'PUT', 'DELETE'])  # PENDING
+# DELETE - Solo Admin puede eliminar
+# GET - Cualquier usuario autenticado puede ver los documentos
+# PUT - Solo Admin puede modificar
+@jwt_required()
+def order_document_by_id(id):
+    response_body = {}
+    claims = get_jwt()
+    user_role = claims.get("role")
+    order_document = db.session.get(OrderDocuments, id)  # Buscar el documento por ID
+    if not order_document:
+        response_body['message'] = 'Order document not found'
+        return jsonify(response_body), 404   
+    if request.method == 'GET':
+        if user_role not in ["admin", "customer", "provider"]:
+            return jsonify({"message": "Access denied."}), 403
+        response_body['message'] = f'Document {id} retrieved successfully'
+        response_body['results'] = order_document.serialize()
+        return jsonify(response_body), 200  
+    if request.method == 'PUT':
+        if user_role != "admin":
+            return jsonify({"message": "Access denied. Only admin can update documents."}), 403
+        data = request.json
+        order_document.document_type = data.get("document_type", order_document.document_type)
+        order_document.document_url = data.get("document_url", order_document.document_url)
+        db.session.commit()
+        response_body['message'] = f'Document {id} updated successfully'
+        response_body['results'] = order_document.serialize()
+        return jsonify(response_body), 200
+    if request.method == 'DELETE':
+        if user_role != "admin":
+            return jsonify({"message": "Access denied. Only admin can delete documents."}), 403
+        db.session.delete(order_document)
+        db.session.commit()
+        response_body['message'] = f'Document {id} deleted successfully'
+        return jsonify(response_body), 200
+"""""    

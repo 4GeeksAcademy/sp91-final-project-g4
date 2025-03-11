@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 
 
+
 export const AddVehicle = () => {
     const { actions } = useContext(Context);
     const navigate = useNavigate();
@@ -30,7 +31,6 @@ export const AddVehicle = () => {
         <div className="container-fluid p-0">
             <header className="bg-secondary text-white text-center py-5">
                 <h1 className="display-4">Añadir Vehiculo</h1>
-                <p className="lead">Gestion de vehiculos </p>
             </header>
 
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>

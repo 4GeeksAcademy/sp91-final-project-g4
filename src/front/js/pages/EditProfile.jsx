@@ -49,6 +49,11 @@ export const EditProfile = () => {
     };
 
     return (
+        <div className="container-fluid p-0">
+            <header className="bg-secondary text-white text-center py-5">
+                <h1 className="display-4">Editar datos de usuario</h1>
+            </header>
+
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: "1rem" }}>
             <h1 className="h3 fw-bold text-center my-2">Editar datos de usuario</h1>
             <form onSubmit={handleSubmitEdit}>
@@ -84,6 +89,7 @@ export const EditProfile = () => {
                 <button type="submit" className="btn btn-warning container my-3">Guardar</button>
                 <button type="button" className="btn btn-secondary container" onClick={handleCancel}>Cancelar</button>
             </form>
+        </div>
         </div>
     );
 };

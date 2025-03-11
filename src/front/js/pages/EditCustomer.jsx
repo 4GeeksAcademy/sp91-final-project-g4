@@ -52,9 +52,13 @@ export const EditCustomer = () => {
     };
 
     return (
+        <div className="container-fluid p-0">
+            <header className="bg-secondary text-white text-center py-5">
+                <h1 className="display-4">Editar datos del cliente</h1>
+            </header>
         <div className="container mt-5">
             <div className="card p-4 shadow">
-                <h1 className="h3 fw-bold text-center my-2">Editar datos de cliente</h1>
+                <h1 className="h3 fw-bold text-center my-2">Datos de cliente</h1>
                 <form onSubmit={handleSubmitEdit}>
                     <div className="form-floating my-3">
                         <input type="text" className="form-control" placeholder="Company name"
@@ -144,6 +148,7 @@ export const EditCustomer = () => {
                     userData={editingUser} // ✅ Pasar datos si es edición
                 />
             )}
+        </div>
         </div>
     );
 };
