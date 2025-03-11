@@ -81,11 +81,12 @@ export const OrderCustomer = () => {
             <div className="container my-2 pb-5">
                 <div className="d-flex justify-content-between mx-3 ">
                     <h1 className="text-secondary my-4">Pedidos de clientes</h1>
-                    <Link to="/add-provider">
-                        <button type="button" className="btn btn-success my-4">
-                            Añadir pedido cliente
-                        </button>
-                    </Link>
+                    <button 
+                    type="button" 
+                    className="btn btn-success my-4"
+                    onClick={() => navigate("/admin/add-order-customer")}>
+                    Añadir pedido cliente
+                    </button>
                 </div>
                 <div className="container">
                     <table className="table table-info">

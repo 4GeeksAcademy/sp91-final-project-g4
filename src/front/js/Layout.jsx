@@ -41,6 +41,7 @@ import { OrderProviderDetail } from "./pages/OrderProviderDetail.jsx";
 import { EditProfile } from "./pages/EditProfile.jsx";
 import { AddAdminModal } from "./pages/AddAdminModal.jsx";  // ✅ Importación correcta
 import { ToastContainer } from "react-toastify";
+import { AddCustomerOrder } from "./pages/AddCustomerOrder.jsx";
 
 
 
@@ -83,7 +84,8 @@ const Layout = () => {
                             <Route element={<CustomerNewOrder />} path="/new-order" />
                             <Route element={<CustomerOrders />} path="/customer-orders" />
                             <Route element={<AddCustomer />} path="/add-customer" />
-                            <Route element={<EditCustomer />} path="/admin/edit-customer" /> // ✅ Corrección de la ruta {/*  ¿Cual sería la URL correcta? */}
+                            <Route element={<EditCustomer />} path="/admin/edit-customer" />
+                            <Route element={<AddCustomerOrder />} path="/admin/add-order-customer" />
                             <Route element={<Providers />} path="/admin/providers" />
                             <Route element={<ProviderDashboard />} path="/provider-dashboard" />
                             <Route element={<ProviderOrders />} path="/provider-orders" />

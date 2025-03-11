@@ -695,6 +695,59 @@ const getState = ({ getStore, getActions, setStore }) => {
 				const data = await response.json();
 				setStore({ locations: data.results });
 			},
+			getDistance: async (originId, destinyId) => {
+				const store = getStore();
+				const token = localStorage.getItem("token");
+			
+				if (!token) {
+					console.error("❌ No hay token disponible, no se puede obtener la distancia.");
+					return null;
+				}
+			
+				const origin = store.locations.find(loc => loc.id == originId);
+				const destination = store.locations.find(loc => loc.id == destinyId);
+			
+				if (!origin || !destination) {
+					console.error("❌ Origen o destino no encontrado.");
+					return null;
+				}
+			
+				const url = "https://api.openrouteservice.org/v2/matrix/driving-car";
+				const headers = {
+					"Authorization": "5b3ce3597851110001cf624838efe49eff8748218b0a9b692f3fb14e",
+					"Content-Type": "application/json"
+				};
+			
+				const body = {
+					"locations": [
+						[origin.longitude, origin.latitude],
+						[destination.longitude, destination.latitude]
+					],
+					"metrics": ["distance"]
+				};
+			
+				try {
+					const response = await fetch(url, {
+						method: "POST",
+						headers: headers,
+						body: JSON.stringify(body)
+					});
+			
+					if (!response.ok) {
+						console.error("❌ Error en la API de distancia:", response.status);
+						return null;
+					}
+			
+					const data = await response.json();
+					const distance_meters = data.distances[0][1];
+					const distance_km = (distance_meters / 1000).toFixed(2);
+					
+					return parseFloat(distance_km);
+				} catch (error) {
+					console.error("❌ Error en getDistance:", error);
+					return null;
+				}
+			},
 			addOrder: async (dataToSend) => {
 				const uri =`${process.env.BACKEND_URL}/api/orders`
 				const options = {
