@@ -41,10 +41,11 @@ export const AddCustomerOrder = () => {
     useEffect(() => {
         if (originId && destinyId) {
             actions.getDistance(originId, destinyId).then(distance => {
-                setDistanceKm(distance.toFixed(2));
-
-                if (distance && baseTariff) {
-                    setFinalCost(((distance * parseFloat(baseTariff)) + parseFloat(correctorCost)).toFixed(2));
+                if (distance !== null) {
+                    setDistanceKm(distance.toFixed(2));
+                    if (distance && baseTariff) {
+                        setFinalCost(((distance * parseFloat(baseTariff)) + parseFloat(correctorCost)).toFixed(2));
+                    }
                 }
             });
         }
@@ -76,9 +77,10 @@ export const AddCustomerOrder = () => {
     };
 
     return (
-        <div className="card container w-100 mt-5" style={{ maxWidth: 700, padding: '1rem' }}>
-            <h1 className="h3 fw-bold text-center my-2">PEDIDO NUEVO</h1>
-            <Alert />
+        <div className="container p-0">
+            <header className="bg-secondary text-white text-center py-5">
+                <h1 className="display-4">Nueva orden Cliente</h1>
+            </header>
             <form onSubmit={handleSubmit}>
                 <label>Cliente</label>
                 <select className="form-control" onChange={(e) => setCustomerId(e.target.value)} required>
@@ -153,3 +155,4 @@ export const AddCustomerOrder = () => {
         </div>
     );
 };
+

@@ -41,8 +41,8 @@ export const CustomerOrders = () => {
   return (
     <div className="container-fluid p-0">
       <header className="bg-secondary text-white text-center py-5">
-        <h1 className="display-4">Mis Pedidos</h1>
-        <p className="lead">Consulta el estado de tus pedidos</p>
+        <h1 className="display-4">Nueva orden Cliente</h1>
+        <p className="lead">Gestion de pedidos y consulta de información </p>
       </header>
 
       <section className="container py-5">
