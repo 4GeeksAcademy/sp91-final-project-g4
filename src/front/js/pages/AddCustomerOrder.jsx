@@ -77,7 +77,7 @@ export const AddCustomerOrder = () => {
 
     return (
         <div className="card container w-100 mt-5" style={{ maxWidth: 700, padding: '1rem' }}>
-            <h1 className="h3 fw-bold text-center my-2">DETALLE DEL PEDIDO</h1>
+            <h1 className="h3 fw-bold text-center my-2">PEDIDO NUEVO</h1>
             <Alert />
             <form onSubmit={handleSubmit}>
                 <label>Cliente</label>
