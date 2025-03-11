@@ -162,5 +162,6 @@ export const OrderCustomerDetail = () => {
                 </div>
             </div>
             </div>
+            </div>
             );
 };

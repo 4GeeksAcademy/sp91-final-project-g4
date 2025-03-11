@@ -77,8 +77,6 @@ export const AddProvider = () => {
                 <button type="button" className="btn btn-secondary container" onClick={handleCancel}>Cancelar</button>
             </form>
         </div>
-    </div>
-        </div>
-    </div>
+    </div>    
     );
 };

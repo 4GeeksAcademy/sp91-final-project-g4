@@ -18,9 +18,6 @@ export const AddVehicle = () => {
         const dataToSend = {
             brand, model, vehicle_type: vehicleType
         };
-        const dataToSend = {
-            brand, model, vehicle_type: vehicleType
-        };
         actions.addVehicle(dataToSend);
         navigate("/admin/vehicles");
     };
@@ -66,8 +63,6 @@ export const AddVehicle = () => {
                 <button type="submit" className="btn btn-warning container my-3">Crear</button>
                 <button type="button" className="btn btn-secondary container" onClick={handleCancel}>Cancelar</button>
             </form>
-        </div>
-    </div>
         </div>
     </div>
     );

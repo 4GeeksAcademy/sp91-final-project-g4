@@ -114,8 +114,6 @@ export const AddCustomerUserModal = ({ show, onClose, customerId, userData }) =>
             )}
                 </>
             );
-                </>
-            );
 };
 
 

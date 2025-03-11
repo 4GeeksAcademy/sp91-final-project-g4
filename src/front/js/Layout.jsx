@@ -25,7 +25,6 @@ import { CustomerOrders } from "./pages/CustomerOrders.jsx";
 import { EditCustomer } from "./pages/EditCustomer.jsx";
 import { AddCustomer } from "./pages/AddCustomer.jsx";
 import { AddCustomerOrder } from "./pages/AddCustomerOrder.jsx";
-import { AddCustomerOrder } from "./pages/AddCustomerOrder.jsx";
 import { Providers } from "./pages/Providers.jsx";
 import { ProviderDashboard } from "./pages/ProviderDashboard.jsx";
 import { ProviderOrders } from "./pages/ProviderOrders.jsx";
