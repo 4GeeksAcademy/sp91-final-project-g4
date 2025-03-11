@@ -24,17 +24,24 @@ export const Vehicles = () => {
             console.log("✅ Estado cambiado con éxito");
     
             // 🔹 Actualiza inmediatamente el estado local en el frontend
-            actions.setAlert({ 
+            /* actions.setAlert({ 
                 text: `Vehículo ${vehicle.is_active ? "desactivado" : "activado"} correctamente`, 
                 background: "primary", 
                 visible: true 
-            });
+            }); */
         } else {
             console.error("❌ No se pudo cambiar el estado del vehículo.");
         }
     }
 
     return (
+
+        <div className="container-fluid p-0">
+        <header className="bg-secondary text-white text-center py-5">
+            <h1 className="display-4">Vehiculos</h1>
+            <p className="lead">Gestion de vehiculos y consulta de información </p>
+        </header>
+
         <div className="container-fluid">
             <div className="container my-2 pb-5">
                 <div className="d-flex justify-content-between mx-3">
@@ -84,6 +91,7 @@ export const Vehicles = () => {
                 </div>
             </div>
         </div>
+    </div>
     );
 }
 

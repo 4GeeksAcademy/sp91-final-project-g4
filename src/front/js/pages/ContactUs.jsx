@@ -29,11 +29,18 @@ export const ContactUs = () => {
         actions.addContact(dataToSend);
 
         // Después de enviar, redirigir o mostrar un mensaje de éxito
-        alert("¡Gracias por contactarnos! Nos pondremos en contacto contigo pronto.");
         navigate("/"); // Redirigir a la página principal o donde sea necesario
     };
 
     return (
+
+        <div className="container-fluid p-0">
+    
+        <header className="bg-secondary text-white text-center py-5">
+          <h1 className="display-4">Bienvenido a tu Panel de Cliente</h1>
+          <p className="lead">Gestiona tus pedidos y consulta tu información fácilmente</p>
+        </header>
+
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: "1rem" }}>
             <h1 className="h3 fw-bold text-center my-2">Contacta con nosotros</h1>
             <form onSubmit={handleSubmit}>
@@ -97,5 +104,6 @@ export const ContactUs = () => {
                 </button>
             </form>
         </div>
+    </div>
     );
 };

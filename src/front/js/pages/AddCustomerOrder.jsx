@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
 
 export const AddCustomerOrder = () => {
     const { store, actions } = useContext(Context);
@@ -41,11 +40,10 @@ export const AddCustomerOrder = () => {
     useEffect(() => {
         if (originId && destinyId) {
             actions.getDistance(originId, destinyId).then(distance => {
-                if (distance !== null) {
-                    setDistanceKm(distance.toFixed(2));
-                    if (distance && baseTariff) {
-                        setFinalCost(((distance * parseFloat(baseTariff)) + parseFloat(correctorCost)).toFixed(2));
-                    }
+                setDistanceKm(distance.toFixed(2));
+
+                if (distance && baseTariff) {
+                    setFinalCost(((distance * parseFloat(baseTariff)) + parseFloat(correctorCost)).toFixed(2));
                 }
             });
         }
@@ -57,11 +55,6 @@ export const AddCustomerOrder = () => {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-
-        if (!isFormValid()) {
-            actions.setAlert({ text: "Todos los campos son obligatorios", background: "danger", visible: true });
-            return;
-        }
 
         const orderData = {
             customer_id: customerId,
@@ -77,10 +70,12 @@ export const AddCustomerOrder = () => {
     };
 
     return (
-        <div className="container p-0">
+        <div className="container-fluid p-0">
             <header className="bg-secondary text-white text-center py-5">
-                <h1 className="display-4">Nueva orden Cliente</h1>
+                <h1 className="display-4">Nuevo pedido de cliente</h1>
             </header>
+        <div className="card container w-100 mt-5" style={{ maxWidth: 700, padding: '1rem' }}>
+            <h1 className="h3 fw-bold text-center my-2">Datos</h1>
             <form onSubmit={handleSubmit}>
                 <label>Cliente</label>
                 <select className="form-control" onChange={(e) => setCustomerId(e.target.value)} required>
@@ -152,6 +147,7 @@ export const AddCustomerOrder = () => {
                     CANCELAR
                 </button>
             </form>
+        </div>
         </div>
     );
 };

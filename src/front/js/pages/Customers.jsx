@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
+
 
 export const Customers = () => {
     const navigate = useNavigate();
@@ -18,11 +18,11 @@ export const Customers = () => {
     const handleToggleStatus = async (customer) => {
         const updatedData = { is_active: !customer.is_active }; // 🔄 Alternar estado
         await actions.editCustomer(customer.id, updatedData);
-        actions.setAlert({ 
+       /*  actions.setAlert({ 
             text: `Cliente ${customer.is_active ? "desactivado" : "activado"} correctamente`, 
             background: "primary", 
             visible: true 
-        });
+        }); */
     };
 
     const handleEdit = async (customer) => {
@@ -31,6 +31,12 @@ export const Customers = () => {
     };
 
     return (
+        <div className="container-fluid p-0">
+            <header className="bg-secondary text-white text-center py-5">
+                <h1 className="display-4">Clientes</h1>
+                <p className="lead">Gestion de clientes y consulta de información </p>
+            </header>
+
         <div className="container-fluid">
             <div className="container my-2 pb-5">
                 <div className="d-flex justify-content-between mx-3">
@@ -79,6 +85,7 @@ export const Customers = () => {
                 </div>
             </div>
         </div>
+    </div>
     );
 };
 

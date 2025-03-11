@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { Context } from "../store/appContext.js";
-import { useNavigate } from "react-router-dom";
-import { Alert } from "../component/Alert.jsx";
+import { Link, useNavigate } from "react-router-dom";
+
 
 export const EditVehicle = () => {
     const { store, actions } = useContext(Context);
@@ -16,8 +16,6 @@ export const EditVehicle = () => {
     // ✅ Manejo de envío del formulario
     const handleSubmitEdit = (event) => {
         event.preventDefault();
-        actions.setAlert({ text: "Vehículo editado correctamente", background: "primary", visible: true });
-
         const dataToSend = {
             brand,
             model,
@@ -35,9 +33,8 @@ export const EditVehicle = () => {
     };
 
     return (
-        <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: "1rem" }}>
-            <h1 className="h3 fw-bold text-center my-2">Editar datos del vehículo</h1>
-            <Alert />
+        <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
+            <h1 className="h3 fw-bold text-center my-2 "> Editar datos del vehículo </h1>
             <form onSubmit={handleSubmitEdit}>
                 <div className="form-floating my-3">
                     <input 

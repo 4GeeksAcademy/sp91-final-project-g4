@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
 
 export const OrderCustomer = () => {
     const navigate = useNavigate();
@@ -11,8 +10,8 @@ export const OrderCustomer = () => {
         navigate("/admin/order-customer-detail", { state: { order } });
     };
 
-    const handleAddOrder = (order) => {
-        navigate("/admin/add-order-customer", { state: { order } });
+    const handleAddOrder = () => {
+        navigate("/admin/add-customer-order");
     };
 
     const [ordersData, setOrdersData] = useState([]);
@@ -22,8 +21,8 @@ export const OrderCustomer = () => {
             await actions.getCustomers();
             await actions.getProviders();
             await actions.getOrders();
-            await actions.getVehicles(); 
-            await actions.getLocations(); 
+            await actions.getVehicles();
+            await actions.getLocations();
         };
 
         fetchData();
@@ -48,7 +47,7 @@ export const OrderCustomer = () => {
                 const vehicle = store.vehicles.find((vehicle) => vehicle.id === order.vehicle_id);
                 const originLocation = store.locations.find((location) => location.id === order.origin_id);
                 const destinationLocation = store.locations.find((location) => location.id === order.destiny_id);
-                
+
                 return {
                     ...order,
                     customerCompanyName: customer ? customer.company_name : "Desconocido",
@@ -69,14 +68,19 @@ export const OrderCustomer = () => {
                     regionDestiny: destinationLocation ? destinationLocation.region : "Desconocido",
                 };
             });
-    
+
             setOrdersData(combinedData);
         }
     }, [store.orders, store.customers, store.providers, store.vehicles, store.locations]);
-    
+
 
 
     return (
+        <div className="container-fluid p-0">
+            <header className="bg-secondary text-white text-center py-5">
+                <h1 className="display-4">Pedidos de clientes</h1>
+                <p className="lead">Gestion de pedidos y consulta de información </p>
+            </header>
         <div className="container-fluid">
             <div className="container my-2 pb-5">
                 <div className="d-flex justify-content-between mx-3 ">
@@ -131,6 +135,7 @@ export const OrderCustomer = () => {
                     </table>
                 </div>
             </div>
+        </div>
         </div>
     );
 };

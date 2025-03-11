@@ -5,7 +5,6 @@ import injectContext from "./store/appContext.js";
 // Custom components
 
 import { MainNavbar } from "./component/MainNavbar.jsx";
-import { Alert } from "./component/Alert.jsx";
 import 'react-toastify/dist/ReactToastify.css';
 import { Footer } from "./component/Footer.jsx";
 import ScrollToTop from "./component/ScrollToTop.jsx";
@@ -25,6 +24,7 @@ import { CustomerNewOrder } from "./pages/CustomerNewOrder.jsx";
 import { CustomerOrders } from "./pages/CustomerOrders.jsx";
 import { EditCustomer } from "./pages/EditCustomer.jsx";
 import { AddCustomer } from "./pages/AddCustomer.jsx";
+import { AddCustomerOrder } from "./pages/AddCustomerOrder.jsx";
 import { Providers } from "./pages/Providers.jsx";
 import { ProviderDashboard } from "./pages/ProviderDashboard.jsx";
 import { ProviderOrders } from "./pages/ProviderOrders.jsx";
@@ -41,10 +41,6 @@ import { OrderProviderDetail } from "./pages/OrderProviderDetail.jsx";
 import { EditProfile } from "./pages/EditProfile.jsx";
 import { AddAdminModal } from "./pages/AddAdminModal.jsx";  // ✅ Importación correcta
 import { ToastContainer } from "react-toastify";
-import { AddCustomerOrder } from "./pages/AddCustomerOrder.jsx";
-
-
-
 
 // Create your first component
 const Layout = () => {
@@ -72,7 +68,6 @@ const Layout = () => {
                             theme="colored"
                         />
                         <Routes>
-                            <Route path="*" element={<h1>Not found!</h1>} />
                             <Route element={<Home />} path="/" />
                             <Route element={<Login />} path="/login" />
                             <Route element={<SignUp />} path="/sign-up" />
@@ -104,6 +99,7 @@ const Layout = () => {
                             <Route element={<OrderProviderDetail />} path="/admin/order-provider-detail" />
                             <Route element={<UserProfile />} path="/admin-profile" />
                             <Route element={<AddAdminModal show={true} onClose={() => navigate("/admin-profile")} />} path="/add-admin" />
+                            <Route path="*" element={<h1>Not found!</h1>} />
 
                         </Routes>
                         <Footer />

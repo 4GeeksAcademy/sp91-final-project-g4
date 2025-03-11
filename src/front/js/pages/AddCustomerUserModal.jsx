@@ -3,7 +3,7 @@ import { Context } from "../store/appContext.js";
 
 export const AddCustomerUserModal = ({ show, onClose, customerId, userData }) => {
     const { actions } = useContext(Context);
-    
+
     // Estados del formulario
     const [name, setName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -64,52 +64,55 @@ export const AddCustomerUserModal = ({ show, onClose, customerId, userData }) =>
     return (
         <>
             {show && (
-                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">{userData ? "Editar Usuario" : "Añadir Usuario"}</h5>
-                                <button type="button" className="btn-close" onClick={onClose}></button>
-                            </div>
-                            <div className="modal-body">
-                                <form onSubmit={handleSubmit}>
-                                    <div className="form-floating my-3">
-                                        <input type="text" className="form-control" placeholder="Nombre"
-                                            value={name} onChange={(e) => setName(e.target.value)} required />
-                                        <label>Nombre</label>
-                                    </div>
-                                    <div className="form-floating my-3">
-                                        <input type="text" className="form-control" placeholder="Apellidos"
-                                            value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-                                        <label>Apellidos</label>
-                                    </div>
-                                    <div className="form-floating my-3">
-                                        <input type="email" className="form-control" placeholder="Email"
-                                            value={email} onChange={(e) => setEmail(e.target.value)} required disabled={userData !== null} />
-                                        <label>Email</label>
-                                    </div>
-                                    <div className="form-floating my-3">
-                                        <input type="text" className="form-control" placeholder="Teléfono"
-                                            value={phone} onChange={(e) => setPhone(e.target.value)} required />
-                                        <label>Teléfono</label>
-                                    </div>
-                                    {!userData && (
+
+                <div className="container-fluid p-0">
+                    <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                        <div className="modal-dialog">
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h5 className="modal-title">{userData ? "Editar Usuario" : "Añadir Usuario"}</h5>
+                                    <button type="button" className="btn-close" onClick={onClose}></button>
+                                </div>
+                                <div className="modal-body">
+                                    <form onSubmit={handleSubmit}>
                                         <div className="form-floating my-3">
-                                            <input type="password" className="form-control" placeholder="Contraseña"
-                                                value={password} onChange={(e) => setPassword(e.target.value)} required />
-                                            <label>Contraseña</label>
+                                            <input type="text" className="form-control" placeholder="Nombre"
+                                                value={name} onChange={(e) => setName(e.target.value)} required />
+                                            <label>Nombre</label>
                                         </div>
-                                    )}
-                                    <button type="submit" className="btn btn-primary w-100">{userData ? "Guardar Cambios" : "Añadir Usuario"}</button>
-                                    <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onClose}>Cancelar</button>
-                                </form>
+                                        <div className="form-floating my-3">
+                                            <input type="text" className="form-control" placeholder="Apellidos"
+                                                value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                                            <label>Apellidos</label>
+                                        </div>
+                                        <div className="form-floating my-3">
+                                            <input type="email" className="form-control" placeholder="Email"
+                                                value={email} onChange={(e) => setEmail(e.target.value)} required disabled={userData !== null} />
+                                            <label>Email</label>
+                                        </div>
+                                        <div className="form-floating my-3">
+                                            <input type="text" className="form-control" placeholder="Teléfono"
+                                                value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                                            <label>Teléfono</label>
+                                        </div>
+                                        {!userData && (
+                                            <div className="form-floating my-3">
+                                                <input type="password" className="form-control" placeholder="Contraseña"
+                                                    value={password} onChange={(e) => setPassword(e.target.value)} required />
+                                                <label>Contraseña</label>
+                                            </div>
+                                        )}
+                                        <button type="submit" className="btn btn-primary w-100">{userData ? "Guardar Cambios" : "Añadir Usuario"}</button>
+                                        <button type="button" className="btn btn-secondary w-100 mt-2" onClick={onClose}>Cancelar</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-        </>
-    );
+                </>
+            );
 };
 
 

@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
+
 
 export const AddVehicle = () => {
     const { actions } = useContext(Context);
@@ -14,9 +14,9 @@ export const AddVehicle = () => {
     // ✅ Función para agregar vehículo
     const handleSubmitAdd = (event) => {
         event.preventDefault();
-        actions.setAlert({ text: 'Vehículo agregado correctamente', background: 'primary', visible: true });
-
-        const dataToSend = { brand, model, vehicle_type: vehicleType };
+        const dataToSend = {
+            brand, model, vehicle_type: vehicleType
+        };
         actions.addVehicle(dataToSend);
         navigate("/admin/vehicles");
     };
@@ -27,9 +27,13 @@ export const AddVehicle = () => {
     };
 
     return (
+        <div className="container-fluid p-0">
+            <header className="bg-secondary text-white text-center py-5">
+                <h1 className="display-4">Añadir Vehiculo</h1>
+            </header>
+
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
-            <h1 className="h3 fw-bold text-center my-2">Alta de vehículo</h1>
-            <Alert />
+            <h1 className="h3 fw-bold text-center my-2 "> Alta de vehículo </h1>
             <form onSubmit={handleSubmitAdd}>
                 <div className="form-floating my-3">
                     <input type="text" className="form-control" id="floatingInput" placeholder="Marca"
@@ -58,5 +62,6 @@ export const AddVehicle = () => {
                 <button type="button" className="btn btn-secondary container" onClick={handleCancel}>Cancelar</button>
             </form>
         </div>
+    </div>
     );
 }

@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
-import { Alert } from "../component/Alert.jsx";
 
 export const OrderProvider = () => {
     const navigate = useNavigate();
@@ -27,7 +26,6 @@ export const OrderProvider = () => {
             await actions.getVehicles();  
             await actions.getLocations(); 
         };
-        actions.setAlert({ text: '', background: 'primary', visible: false });
 
         fetchData();
     }, []);
@@ -45,12 +43,13 @@ export const OrderProvider = () => {
             store.locations &&
             store.locations.length > 0
         ) {
-            const combinedData = store.orders.map((order) => {
+                const combinedData = store.orders.map((order) => {
                 const customer = store.customers.find((customer) => customer.id === order.customer_id);
                 const provider = store.providers.find((provider) => provider.id === order.provider_id);
                 const vehicle = store.vehicles.find((vehicle) => vehicle.id === order.vehicle_id);
                 const originLocation = store.locations.find((location) => location.id === order.origin_id);
                 const destinationLocation = store.locations.find((location) => location.id === order.destiny_id);
+                console.log(destinationLocation);
                 
                 return {
                     ...order,
@@ -80,6 +79,12 @@ export const OrderProvider = () => {
 
 
     return (
+        <div className="container-fluid p-0">
+        <header className="bg-secondary text-white text-center py-5">
+            <h1 className="display-4">Taslados</h1>
+            <p className="lead">Gestion de traslado de proveedores y consulta de información </p>
+        </header>
+
         <div className="container-fluid">
             <div className="container my-2 pb-5">
                 <div className="d-flex justify-content-between mx-3 ">
@@ -95,6 +100,7 @@ export const OrderProvider = () => {
                         <thead>
                             <tr>
                                 <th scope="col">Proveedor</th>
+                                <th scope="col">Cliente</th>
                                 <th scope="col">Fecha de pedido</th>
                                 <th scope="col">Fecha estimada de entrega</th>
                                 <th scope="col">Origen</th>
@@ -114,8 +120,8 @@ export const OrderProvider = () => {
                                     <td>{order.providerCompanyName}</td>
                                     <td>{order.order_created_date}</td>
                                     <td>{order.estimated_date_end}</td>
-                                    <td>{order.origin}</td>
-                                    <td>{order.destination}</td>
+                                    <td>{order.regionOrigin}</td>
+                                    <td>{order.regionDestiny}</td>
                                     <td>{order.brand}</td>
                                     <td>{order.model}</td>
                                     <td>{order.plate}</td>
@@ -132,5 +138,6 @@ export const OrderProvider = () => {
                 </div>
             </div>
         </div>
+    </div>
     );
 };

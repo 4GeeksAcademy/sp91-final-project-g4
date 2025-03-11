@@ -6,7 +6,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 			message: null,
 			isLogged: false,
 			token: localStorage.getItem('token') || null, // 🔹 Guarda el token
-			alert: { text: '', background: 'primary', visible: 'false' },
 			user: {},
 			admins: [], // 🔹 Añadir lista de administradores
 			currentUser: {},
@@ -23,7 +22,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 		},
 		actions: {
 			setIsLogged: (value) => { setStore({ isLogged: value }) },
-			setAlert: (newAlert) => setStore({ alert: newAlert }),
 			setUser: (currentUser) => { setStore({ user: currentUser }) },
 			setCurrentUser: (item) => { setStore({ currentUser: item }) },
 			setCurrentCustomer: (customer) => { setStore({ currentCustomer: customer }) },
@@ -99,7 +97,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return
 				}
 				const data = await response.json()
-				setStore({ alert: { text: data.message, background: 'success', visible: true } })
 			},
 			addUser: async (dataToSend) => {
 				const uri = `${process.env.BACKEND_URL}/api/users`;
@@ -367,8 +364,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					const data = await response.json();
 					console.log("✅ Cliente agregado correctamente:", data);
 
-					setStore({ alert: { text: 'Cliente agregado correctamente', background: 'success', visible: true } });
-
 					getActions().getCustomers(); // 🔹 Actualiza la lista de clientes
 
 					return true; // ✅ Retornar `true` indica éxito
@@ -525,7 +520,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("error", response.status, response.statusText);
 					return
 				}
-				setStore({ alert: { text: 'Proveedor desactivado correctamente ', background: 'success', visible: true } })
 				getActions().getProviders();
 			},
 
@@ -598,7 +592,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					if (!response.ok) {
 						throw new Error(`Error ${response.status}: ${response.statusText}`);
 					}
-					setStore({ alert: { text: 'Vehículo agregado correctamente', background: 'success', visible: true } });
 					getActions().getVehicles();
 				} catch (error) {
 					console.error("❌ Error en addVehicle:", error);
@@ -660,7 +653,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					if (!response.ok) {
 						throw new Error(`Error ${response.status}: ${response.statusText}`);
 					}
-					setStore({ alert: { text: `Vehículo ${currentStatus ? "desactivado" : "activado"} correctamente`, background: 'primary', visible: true } });
 					getActions().getVehicles(); // ✅ Recargar lista después de cambio de estado
 				} catch (error) {
 					console.error("❌ Error en toggleVehicleStatus:", error);
@@ -683,6 +675,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				const data = await response.json();
 				setStore({ orders: data.results });
 			},
+
 			getLocations: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/locations`;
 				const options = {
@@ -698,6 +691,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				const data = await response.json();
 				setStore({ locations: data.results });
 			},
+
 			getDistance: async (originId, destinyId) => {
 				const store = getStore();
 				const token = localStorage.getItem("token");
@@ -751,6 +745,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return null;
 				}
 			},
+
 			addOrder: async (dataToSend) => {
 				const uri = `${process.env.BACKEND_URL}/api/orders`;
 				const token = localStorage.getItem("token"); // ✅ Obtener el token

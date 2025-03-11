@@ -495,6 +495,7 @@ def vehicles():
         brand=data.get("brand"),
         model=data.get("model"),
         vehicle_type=data.get("vehicle_type"))
+        
     db.session.add(new_vehicle)
     db.session.commit()
     response_body['message'] = " Vehiculo creado exitosamente"
@@ -726,15 +727,15 @@ def get_order(order_id):
             return jsonify(response_body), 200
         if request.method == 'PUT':  # Modificar orden
             data = request.json
-            order.status = data.get("status", order.status)
-            order.total_price = data.get("total_price", order.total_price)
-            order.delivery_date = data.get("delivery_date", order.delivery_date)
+            order.status_order = data.get("status", order.status_order)
+            order.final_cost = data.get("total_price", order.final_cost)
+            order.delivered_date = data.get("delivery_date", order.delivered_date)
             db.session.commit()
             response_body["message"] = f"Order {order_id} updated successfully"
             response_body["order"] = order.serialize()
             return jsonify(response_body), 200
         if request.method == 'DELETE':  # Cancelar orden
-            order.status = "Canceled"  # En lugar de eliminar, la marcamos como cancelada
+            order.status_order = "Canceled"  # En lugar de eliminar, la marcamos como cancelada
             db.session.commit()
             return jsonify({"message": f"Order {order_id} has been canceled"}), 200 
     customer = db.session.execute(db.select(Customers).where(Customers.user_id == user_id)).scalar()
