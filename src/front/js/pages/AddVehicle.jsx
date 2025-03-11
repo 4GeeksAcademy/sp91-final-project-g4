@@ -27,6 +27,12 @@ export const AddVehicle = () => {
     };
 
     return (
+        <div className="container-fluid p-0">
+            <header className="bg-secondary text-white text-center py-5">
+                <h1 className="display-4">Añadir Vehiculo</h1>
+                <p className="lead">Gestion de vehiculos </p>
+            </header>
+
         <div className="card container w-100 mt-5" style={{ maxWidth: 500, padding: '1rem' }}>
             <h1 className="h3 fw-bold text-center my-2 "> Alta de vehículo </h1>
             <form onSubmit={handleSubmitAdd}>
@@ -57,5 +63,6 @@ export const AddVehicle = () => {
                 <button type="button" className="btn btn-secondary container" onClick={handleCancel}>Cancelar</button>
             </form>
         </div>
+    </div>
     );
 }

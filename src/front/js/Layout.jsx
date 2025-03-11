@@ -24,6 +24,7 @@ import { CustomerNewOrder } from "./pages/CustomerNewOrder.jsx";
 import { CustomerOrders } from "./pages/CustomerOrders.jsx";
 import { EditCustomer } from "./pages/EditCustomer.jsx";
 import { AddCustomer } from "./pages/AddCustomer.jsx";
+import { AddCustomerOrder } from "./pages/AddCustomerOrder.jsx";
 import { Providers } from "./pages/Providers.jsx";
 import { ProviderDashboard } from "./pages/ProviderDashboard.jsx";
 import { ProviderOrders } from "./pages/ProviderOrders.jsx";
@@ -70,7 +71,6 @@ const Layout = () => {
                             theme="colored"
                         />
                         <Routes>
-                            <Route path="*" element={<h1>Not found!</h1>} />
                             <Route element={<Home />} path="/" />
                             <Route element={<Login />} path="/login" />
                             <Route element={<SignUp />} path="/sign-up" />
@@ -82,6 +82,7 @@ const Layout = () => {
                             <Route element={<CustomerNewOrder />} path="/new-order" />
                             <Route element={<CustomerOrders />} path="/customer-orders" />
                             <Route element={<AddCustomer />} path="/add-customer" />
+                            <Route element={<AddCustomerOrder />} path="/admin/add-customer-order" />
                             <Route element={<EditCustomer />} path="/admin/edit-customer" /> // ✅ Corrección de la ruta {/*  ¿Cual sería la URL correcta? */}
                             <Route element={<Providers />} path="/admin/providers" />
                             <Route element={<ProviderDashboard />} path="/provider-dashboard" />
@@ -101,6 +102,7 @@ const Layout = () => {
                             <Route element={<OrderProviderDetail />} path="/admin/order-provider-detail" />
                             <Route element={<UserProfile />} path="/admin-profile" />
                             <Route element={<AddAdminModal show={true} onClose={() => navigate("/admin-profile")} />} path="/add-admin" />
+                            <Route path="*" element={<h1>Not found!</h1>} />
 
                         </Routes>
                         <Footer />

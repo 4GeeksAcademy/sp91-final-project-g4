@@ -35,6 +35,12 @@ export const AddProvider = () => {
     };
 
     return (
+        <div className="container-fluid p-0">
+        <header className="bg-secondary text-white text-center py-5">
+            <h1 className="display-4">Nuevo Proveedor</h1>
+            <p className="lead">Datos de proveedor y usuarios </p>
+        </header>
+
         <div className="card container w-100 mt-5" style={{maxWidth: 500, padding: '1rem'}}>
             <h1 className="h3 fw-bold text-center my-2 "> Alta de proveedores </h1>
             <form onSubmit={handleSubmitAdd}> 
@@ -71,5 +77,6 @@ export const AddProvider = () => {
                 <button type="button" className="btn btn-secondary container" onClick={handleCancel}>Cancelar</button>
             </form>
         </div>
+    </div>
     );
 };

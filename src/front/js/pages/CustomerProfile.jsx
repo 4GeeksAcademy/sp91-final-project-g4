@@ -14,6 +14,7 @@ export const CustomerProfile = () => {
     return (
         <div className="container bg-light mt-5">
             <h1 className="text-secondary text-center">Perfil del Cliente</h1>
+            <p className="lead">Gestion de datos personales y de usuarios  </p>
 
             {store.customer ? (
                 <>
