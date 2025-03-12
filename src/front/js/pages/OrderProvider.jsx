@@ -110,7 +110,6 @@ export const OrderProvider = () => {
                                 <th scope="col">Matrícula</th>
                                 <th scope="col">Estado del pedido</th>
                                 <th scope="col"></th>
-                                <th scope="col"></th>
                             </tr>
                         </thead>
                         <tbody>

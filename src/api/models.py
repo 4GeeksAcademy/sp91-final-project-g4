@@ -174,6 +174,10 @@ class Orders(db.Model):
     origin_id = db.Column(db.Integer(), db.ForeignKey('locations.id'))
     location_origin_to = db.relationship('Locations', foreign_keys=[origin_id], backref=db.backref('location_origin_to', lazy='select'))
     comment = db.Column(db.String(), unique=False, nullable=True)
+    origin_contact = db.Column(db.String(), nullable=True)  
+    origin_phone = db.Column(db.String(), nullable=True)  
+    destiny_contact = db.Column(db.String(), nullable=True)  
+    destiny_phone = db.Column(db.String(), nullable=True)
   
     def __repr__(self):
         return f'<Order: {self.id} - Customer: {self.customer_id} - Provider: {self.provider_id}>'
@@ -198,7 +202,17 @@ class Orders(db.Model):
                 "vehicle_id": self.vehicle_id,
                 "origin_id": self.origin_id,
                 "destiny_id": self.destiny_id,
-                "comment": self.comment}
+                "comment": self.comment,
+                "origin_contact": self.origin_contact,
+                "origin_phone": self.origin_phone,
+                "destiny_contact": self.destiny_contact,
+                "destiny_phone": self.destiny_phone,
+                "origin_city": self.location_origin_to.city if self.location_origin_to else "N/A",
+                "origin_region": self.location_origin_to.region if self.location_origin_to else "N/A",
+                "origin_zip": self.location_origin_to.postal_code if self.location_origin_to else "N/A",
+                "destiny_city": self.location_destiny_to.city if self.location_destiny_to else "N/A",
+                "destiny_region": self.location_destiny_to.region if self.location_destiny_to else "N/A",
+                "destiny_zip": self.location_destiny_to.postal_code if self.location_destiny_to else "N/A",}
 
 
 class OrderDocuments(db.Model):

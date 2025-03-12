@@ -17,6 +17,12 @@ export const AddCustomerOrder = () => {
     const [correctorCost, setCorrectorCost] = useState(null);
     const [finalCost, setFinalCost] = useState(null);
 
+    // 🔹 Nuevos campos agregados
+    const [originContact, setOriginContact] = useState("");
+    const [originPhone, setOriginPhone] = useState("");
+    const [destinyContact, setDestinyContact] = useState("");
+    const [destinyPhone, setDestinyPhone] = useState("");
+
     useEffect(() => {
         actions.getCustomers();
         actions.getLocations();
@@ -63,6 +69,10 @@ export const AddCustomerOrder = () => {
             vehicle_id: vehicleId,
             plate,
             estimated_date_end: estimatedDate,
+            origin_contact: originContact, // ✅ Nuevo campo
+            origin_phone: originPhone, // ✅ Nuevo campo
+            destiny_contact: destinyContact, // ✅ Nuevo campo
+            destiny_phone: destinyPhone, // ✅ Nuevo campo
         };
 
         const success = await actions.addOrder(orderData);
@@ -74,81 +84,98 @@ export const AddCustomerOrder = () => {
             <header className="bg-secondary text-white text-center py-5">
                 <h1 className="display-4">Nuevo pedido de cliente</h1>
             </header>
-        <div className="card container w-100 mt-5" style={{ maxWidth: 700, padding: '1rem' }}>
-            <h1 className="h3 fw-bold text-center my-2">Datos</h1>
-            <form onSubmit={handleSubmit}>
-                <label>Cliente</label>
-                <select className="form-control" onChange={(e) => setCustomerId(e.target.value)} required>
-                    <option value="">Seleccione un Cliente</option>
-                    {store.customers.map(customer => (
-                        <option key={customer.id} value={customer.id}>{customer.company_name}</option>
-                    ))}
-                </select>
-
-                <div className="d-flex gap-2">
-                    <div className="w-50">
-                        <label>Origen</label>
-                        <select className="form-control" onChange={(e) => setOriginId(e.target.value)} required>
-                            <option value="">Seleccione un Origen</option>
-                            {store.locations.map(location => (
-                                <option key={location.id} value={location.id}>{location.city}</option>
+            <div className="card container w-100 mt-5" style={{ maxWidth: 700, padding: '1rem' }}>
+                <h1 className="h3 fw-bold text-center my-2">Datos</h1>
+                <form onSubmit={handleSubmit}>
+                    <label>Cliente</label>
+                    <select className="form-control" onChange={(e) => setCustomerId(e.target.value)} required>
+                        <option value="">Seleccione un Cliente</option>
+                        {store.customers
+                            .filter(customer => customer.is_active)
+                            .map(customer => (
+                                <option key={customer.id} value={customer.id}>{customer.company_name}</option>
                             ))}
-                        </select>
+                    </select>
+
+                    <div className="d-flex gap-2">
+                        <div className="w-50">
+                            <label>Origen</label>
+                            <select className="form-control" onChange={(e) => setOriginId(e.target.value)} required>
+                                <option value="">Seleccione un Origen</option>
+                                {store.locations.map(location => (
+                                    <option key={location.id} value={location.id}>{location.city}</option>
+                                ))}
+                            </select>
+                            {/* 🔹 Nuevos campos de Contacto y Teléfono de Origen */}
+                            <label>Contacto Origen</label>
+                            <input type="text" className="form-control" onChange={(e) => setOriginContact(e.target.value)} required />
+                            <label>Teléfono Origen</label>
+                            <input type="text" className="form-control" onChange={(e) => setOriginPhone(e.target.value)} required />
+                        </div>
+
+                        <div className="w-50">
+                            <label>Destino</label>
+                            <select className="form-control" onChange={(e) => setDestinyId(e.target.value)} required>
+                                <option value="">Seleccione un Destino</option>
+                                {store.locations.map(location => (
+                                    <option key={location.id} value={location.id}>{location.city}</option>
+                                ))}
+                            </select>
+                            {/* 🔹 Nuevos campos de Contacto y Teléfono de Destino */}
+                            <label>Contacto Destino</label>
+                            <input type="text" className="form-control" onChange={(e) => setDestinyContact(e.target.value)} required />
+                            <label>Teléfono Destino</label>
+                            <input type="text" className="form-control" onChange={(e) => setDestinyPhone(e.target.value)} required />
+                        </div>
                     </div>
 
-                    <div className="w-50">
-                        <label>Destino</label>
-                        <select className="form-control" onChange={(e) => setDestinyId(e.target.value)} required>
-                            <option value="">Seleccione un Destino</option>
-                            {store.locations.map(location => (
-                                <option key={location.id} value={location.id}>{location.city}</option>
+                    <label>Vehículo</label>
+                    <select className="form-control" onChange={(e) => setVehicleId(e.target.value)} required>
+                        <option value="">Seleccione un Vehículo</option>
+                        {store.vehicles
+                            .filter(vehicle => vehicle.is_active)
+                            .map(vehicle => (
+                                <option key={vehicle.id} value={vehicle.id}>
+                                    {vehicle.brand} {vehicle.model}
+                                </option>
                             ))}
-                        </select>
+                    </select>
+
+                    <label>Matrícula</label>
+                    <input type="text" className="form-control" onChange={(e) => setPlate(e.target.value)} required />
+
+                    <label>Fecha Estimada de Entrega</label>
+                    <input type="date" className="form-control" onChange={(e) => setEstimatedDate(e.target.value)} required />
+
+                    <div className="tarifa mt-3 p-3 bg-light">
+                        <h5>Tarifa Estimada</h5>
+                        <p>Kilómetros: <b>{distanceKm !== "--" ? `${distanceKm} km` : "-- km"}</b></p>
+                        <p>Tarifa Base: <b>{baseTariff !== null ? `${baseTariff}€/km` : "-- €/km"}</b></p>
+                        <p>Suplemento vehículo: <b>{correctorCost !== null ? `${correctorCost}€` : "-- €"}</b></p>
+                        {finalCost !== null && (
+                            <p><b>Total (IVA no incluido): {finalCost}€</b></p>
+                        )}
                     </div>
-                </div>
 
-                <label>Vehículo</label>
-                <select className="form-control" onChange={(e) => setVehicleId(e.target.value)} required>
-                    <option value="">Seleccione un Vehículo</option>
-                    {store.vehicles.map(vehicle => (
-                        <option key={vehicle.id} value={vehicle.id}>{vehicle.brand} {vehicle.model}</option>
-                    ))}
-                </select>
+                    <button
+                        type="submit"
+                        className="btn btn-primary my-3 w-100"
+                        disabled={!isFormValid()}
+                    >
+                        CREAR PEDIDO
+                    </button>
 
-                <label>Matrícula</label>
-                <input type="text" className="form-control" onChange={(e) => setPlate(e.target.value)} required />
-
-                <label>Fecha Estimada de Entrega</label>
-                <input type="date" className="form-control" onChange={(e) => setEstimatedDate(e.target.value)} required />
-
-                <div className="tarifa mt-3 p-3 bg-light">
-                    <h5>Tarifa Estimada</h5>
-                    <p>Kilómetros: <b>{distanceKm !== "--" ? `${distanceKm} km` : "-- km"}</b></p>
-                    <p>Tarifa Base: <b>{baseTariff !== null ? `${baseTariff}€/km` : "-- €/km"}</b></p>
-                    <p>Suplemento vehículo: <b>{correctorCost !== null ? `${correctorCost}€` : "-- €"}</b></p>
-                    {finalCost !== null && (
-                        <p><b>Total (IVA no incluido): {finalCost}€</b></p>
-                    )}
-                </div>
-
-                <button 
-                    type="submit" 
-                    className="btn btn-primary my-3 w-100" 
-                    disabled={!isFormValid()}
-                >
-                    CREAR PEDIDO
-                </button>
-
-                <button 
-                    type="button" 
-                    className="btn btn-secondary my-3 w-100" 
-                    onClick={() => navigate("/admin/orders-customers")}
-                >
-                    CANCELAR
-                </button>
-            </form>
-        </div>
+                    <button
+                        type="button"
+                        className="btn btn-secondary my-3 w-100"
+                        onClick={() => navigate("/admin/orders-customers")}
+                    >
+                        CANCELAR
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };
+
 
