@@ -44,6 +44,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 				setStore({ message: data.message })
 				return;
 			},
+		
+
 			login: async (dataToSend) => {
 				const uri = `${process.env.BACKEND_URL}/api/login`;
 				const options = {
