@@ -195,7 +195,7 @@ def login():
     if not user.is_active:
         response_body["message"] = "User is inactive, please contact support"
         return response_body, 403
-    access_token = create_access_token(identity=email, additional_claims={"user_id": user.id, "role": user.role})
+    access_token = create_access_token(identity=email, additional_claims={"user_id": user.id, "role": user.role, "provider_id":user.provider_id, "customer_id":user.customer_id})
     response_body['access_token'] = access_token
     response_body['message'] = 'User logged'
     response_body['results'] = user.serialize()
@@ -629,21 +629,21 @@ def orders():
     claims = get_jwt()
     user_role = claims.get("role")
     user_id = claims.get("user_id")
+    customer_id = claims.get("customer_id")
+    provider_id = claims.get("provider_id")
     print(f"🔍 JWT Identity (Email): {user_email}")
     if request.method == 'GET':  # GET: Obtener órdenes según el rol del usuario     
         query = db.select(Orders)
         if user_role == "customer":  # Solo ve sus propias órdenes          
-            customer = db.session.execute(
-                db.select(Customers).where(Customers.user_id == user_id)).scalar()
+            customer = db.session.execute(db.select(Customers).where(Customers.id == customer_id)).scalar()
             if not customer:
                 return jsonify({"message": "Customer not found"}), 404
-            query = query.where(Orders.customer_id == customer.id)
+            query = query.where(Orders.customer_id == customer_id)
         elif user_role == "provider":  # Solo ve sus órdenes asignadas          
-            provider = db.session.execute(
-                db.select(Providers).where(Providers.user_id == user_id)).scalar()
+            provider = db.session.execute(db.select(Providers).where(Providers.id == provider_id)).scalar()
             if not provider:
                 return jsonify({"message": "Provider not found"}), 404
-            query = query.where(Orders.provider_id == provider.id)
+            query = query.where(Orders.provider_id == provider_id)
         # Admin puede ver todas las órdenes
         orders = db.session.execute(query).scalars()
         result = [order.serialize() for order in orders]

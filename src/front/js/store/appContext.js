@@ -35,9 +35,20 @@ const injectContext = PassedComponent => {
 			const token = localStorage.getItem('token')
 			if (token){
 				const decodeToken = jwtDecode(token)
-				console.log(decodeToken.user_id);
-				state.actions.setIsLogged(true);
-				state.actions.getUser(decodeToken.user_id)
+				console.log(decodeToken.exp);
+				const nowDate = new Date().getTime()/1000
+				const result = decodeToken.exp > Math.floor(nowDate)
+				console.log(result);
+				console.log(nowDate);
+				if (result) {
+					state.actions.setIsLogged(true);
+					state.actions.getUser(decodeToken.user_id)
+				}
+				else{
+					state.actions.setIsLogged(false);
+				}
+				
+
 				
 			}
 		}, []);

@@ -168,8 +168,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 					if (!response.ok) throw new Error(`Error ${response.status}`);
 
 					const data = await response.json();
-					console.log("✅ Usuario obtenido:", data.results);
-
+					console.log(data);
+					
 					setStore({ user: data.results });
 				} catch (error) {
 					console.error("❌ Error en getUser:", error);
@@ -177,31 +177,43 @@ const getState = ({ getStore, getActions, setStore }) => {
 			},
 			editUser: async (userId, dataToSend) => {
 				const uri = `${process.env.BACKEND_URL}/api/users/${userId}`;
+				
+				// Verifica si el token existe
+				const token = localStorage.getItem('token');
+				if (!token) {
+					console.error("❌ No se encontró el token JWT.");
+					return false;
+				}
+			
 				const options = {
 					method: "PUT",
 					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`,
+						Authorization: `Bearer ${token}`,
 						"Content-Type": "application/json"
 					},
 					body: JSON.stringify(dataToSend)
 				};
-
+			
 				try {
 					const response = await fetch(uri, options);
+					
 					if (!response.ok) {
-						console.error(`❌ Error al editar usuario: ${response.status}`);
+						// Si no es ok, obtener el mensaje de error
+						const errorData = await response.json();
+						console.error(`❌ Error al editar usuario: ${response.status} - ${errorData.message}`);
 						return false;
 					}
-
+			
 					const data = await response.json();
 					setStore({ user: data.results }); // ✅ Actualiza el store con los nuevos datos
-
+			
 					return true;  // ✅ Indica que la edición fue exitosa
 				} catch (error) {
 					console.error("❌ Error en editUser:", error);
 					return false;
 				}
 			},
+			
 
 			getAdmins: async () => {
 				try {
@@ -468,7 +480,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 
 					const data = await response.json();
-					console.log("✅ Proveedor obtenido:", data.results);
 					setStore({ currentProvider: data.results });
 				} catch (error) {
 					console.error("❌ Error en getProviderById:", error);

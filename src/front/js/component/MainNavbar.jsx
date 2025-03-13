@@ -13,6 +13,7 @@ export const MainNavbar = () => {
 
   const { store, actions } = useContext(Context);
   const navigate = useNavigate();
+
   const handleLogin = () => {
     if (store.isLogged) {
       actions.setIsLogged(false);
@@ -50,7 +51,7 @@ export const MainNavbar = () => {
                   {store.user.role === "provider" && (
                     <>
                       <NavDropdown.Item as={Link} to="/provider-dashboard">Mi pagina proveedor</NavDropdown.Item>
-                      <NavDropdown.Item as={Link} to="/provider-dashboard">Mi perfil</NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/provider-profile">Mi perfil</NavDropdown.Item>
                       <NavDropdown.Item as={Link} to="/provider-orders">Mis traslados</NavDropdown.Item>
 
                     </>
