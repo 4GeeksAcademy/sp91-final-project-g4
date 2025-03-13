@@ -4,7 +4,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
-
 class Users(db.Model):  # Incluir Customer y Provider para creacion de contactos?
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(), unique=False, nullable=False)
@@ -157,7 +156,7 @@ class Orders(db.Model):
     final_cost = db.Column(db.Float(), unique=False, nullable=True)
     prov_base_tariff = db.Column(db.Float(), unique=False, nullable=True)
     cust_base_tariff = db.Column(db.Float(), unique=False, nullable=True)
-    status_order = db.Column(db.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), unique=False, nullable=False)
+    status_order = db.Column(db.Enum('Order created', 'Order accepted', 'In transit', 'Delivered', 'Cancel', name='status_order'), unique=False, nullable=False)
     order_created_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     order_acepted_date = db.Column(db.Date(), unique=False, nullable=True)
     in_transit_date = db.Column(db.Date(), unique=False, nullable=True)
@@ -174,6 +173,10 @@ class Orders(db.Model):
     origin_id = db.Column(db.Integer(), db.ForeignKey('locations.id'))
     location_origin_to = db.relationship('Locations', foreign_keys=[origin_id], backref=db.backref('location_origin_to', lazy='select'))
     comment = db.Column(db.String(), unique=False, nullable=True)
+    origin_contact = db.Column(db.String(), nullable=True)  
+    origin_phone = db.Column(db.String(), nullable=True)  
+    destiny_contact = db.Column(db.String(), nullable=True)  
+    destiny_phone = db.Column(db.String(), nullable=True)
   
     def __repr__(self):
         return f'<Order: {self.id} - Customer: {self.customer_id} - Provider: {self.provider_id}>'
@@ -198,7 +201,17 @@ class Orders(db.Model):
                 "vehicle_id": self.vehicle_id,
                 "origin_id": self.origin_id,
                 "destiny_id": self.destiny_id,
-                "comment": self.comment}
+                "comment": self.comment,
+                "origin_contact": self.origin_contact,
+                "origin_phone": self.origin_phone,
+                "destiny_contact": self.destiny_contact,
+                "destiny_phone": self.destiny_phone,
+                "origin_city": self.location_origin_to.city if self.location_origin_to else "N/A",
+                "origin_region": self.location_origin_to.region if self.location_origin_to else "N/A",
+                "origin_zip": self.location_origin_to.postal_code if self.location_origin_to else "N/A",
+                "destiny_city": self.location_destiny_to.city if self.location_destiny_to else "N/A",
+                "destiny_region": self.location_destiny_to.region if self.location_destiny_to else "N/A",
+                "destiny_zip": self.location_destiny_to.postal_code if self.location_destiny_to else "N/A",}
 
 
 class OrderDocuments(db.Model):
