@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 0e281781f292
+Revision ID: 9f76dc08ca55
 Revises: 
-Create Date: 2025-03-11 20:36:20.170872
+Create Date: 2025-03-13 20:14:42.940122
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '0e281781f292'
+revision = '9f76dc08ca55'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -78,7 +78,7 @@ def upgrade():
     sa.Column('final_cost', sa.Float(), nullable=True),
     sa.Column('prov_base_tariff', sa.Float(), nullable=True),
     sa.Column('cust_base_tariff', sa.Float(), nullable=True),
-    sa.Column('status_order', sa.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), nullable=False),
+    sa.Column('status_order', sa.Enum('Order created', 'Order accepted', 'In transit', 'Delivered', 'Cancel', name='status_order'), nullable=False),
     sa.Column('order_created_date', sa.Date(), nullable=False),
     sa.Column('order_acepted_date', sa.Date(), nullable=True),
     sa.Column('in_transit_date', sa.Date(), nullable=True),
@@ -90,6 +90,10 @@ def upgrade():
     sa.Column('destiny_id', sa.Integer(), nullable=True),
     sa.Column('origin_id', sa.Integer(), nullable=True),
     sa.Column('comment', sa.String(), nullable=True),
+    sa.Column('origin_contact', sa.String(), nullable=True),
+    sa.Column('origin_phone', sa.String(), nullable=True),
+    sa.Column('destiny_contact', sa.String(), nullable=True),
+    sa.Column('destiny_phone', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['customer_id'], ['customers.id'], ),
     sa.ForeignKeyConstraint(['destiny_id'], ['locations.id'], ),
     sa.ForeignKeyConstraint(['origin_id'], ['locations.id'], ),

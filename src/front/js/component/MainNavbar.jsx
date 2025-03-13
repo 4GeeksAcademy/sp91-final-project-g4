@@ -13,6 +13,7 @@ export const MainNavbar = () => {
 
   const { store, actions } = useContext(Context);
   const navigate = useNavigate();
+
   const handleLogin = () => {
     if (store.isLogged) {
       actions.setIsLogged(false);
@@ -42,7 +43,7 @@ export const MainNavbar = () => {
                   {store.user.role === "customer" && (
                     <>
                       <NavDropdown.Item as={Link} to="/customer-dashboard">Mi pagina cliente</NavDropdown.Item>
-                      <NavDropdown.Item as={Link} to="/customer-dashboard">Mi perfil</NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/customer-profile">Mis Datos</NavDropdown.Item>
                       <NavDropdown.Item as={Link} to="/new-order">Nuevo pedido</NavDropdown.Item>
                       <NavDropdown.Item as={Link} to="/customer-orders">Mis pedidos</NavDropdown.Item>
                     </>
@@ -50,7 +51,7 @@ export const MainNavbar = () => {
                   {store.user.role === "provider" && (
                     <>
                       <NavDropdown.Item as={Link} to="/provider-dashboard">Mi pagina proveedor</NavDropdown.Item>
-                      <NavDropdown.Item as={Link} to="/provider-dashboard">Mi perfil</NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/provider-profile">Mi perfil</NavDropdown.Item>
                       <NavDropdown.Item as={Link} to="/provider-orders">Mis traslados</NavDropdown.Item>
 
                     </>

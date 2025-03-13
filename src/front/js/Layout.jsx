@@ -41,6 +41,7 @@ import { OrderProviderDetail } from "./pages/OrderProviderDetail.jsx";
 import { EditProfile } from "./pages/EditProfile.jsx";
 import { AddAdminModal } from "./pages/AddAdminModal.jsx";  // ✅ Importación correcta
 import { ToastContainer } from "react-toastify";
+import { EditProviderProfile } from "./pages/EditProviderProfile.jsx";
 
 // Create your first component
 const Layout = () => {
@@ -85,6 +86,7 @@ const Layout = () => {
                             <Route element={<ProviderDashboard />} path="/provider-dashboard" />
                             <Route element={<ProviderOrders />} path="/provider-orders" />
                             <Route element={<ProviderProfile />} path="/provider-profile" />
+                            <Route element={<EditProviderProfile />} path="/edit-provider-user" />
                             <Route element={<AddProvider />} path="/add-provider" />
                             <Route element={<EditProvider />} path="/admin/edit-provider" />
                             <Route element={<Vehicles />} path="/admin/vehicles" />
