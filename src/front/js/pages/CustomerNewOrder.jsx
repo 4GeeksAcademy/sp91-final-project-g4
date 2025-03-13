@@ -1,156 +1,161 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 
 export const CustomerNewOrder = () => {
-  const [vehiculos, setVehiculos] = useState([]);
-  const [localidades, setLocalidades] = useState([]);
-  const [selectedVehicle, setSelectedVehicle] = useState("");
-  const [originLocation, setOriginLocation] = useState("");
-  const [destinationLocation, setDestinationLocation] = useState("");
-  const [tarifa, setTarifa] = useState(null);
+    const { store, actions } = useContext(Context);
+    const navigate = useNavigate();
 
-  const navigate = useNavigate();
+  
+    const customerId = store.currentUser?.id;
 
-  useEffect(() => {
-    // Aquí puedes obtener los vehículos y localidades desde tu API o contexto.
-    // Por ejemplo, si tienes una función fetchData para obtenerlos desde la API:
+    const [originId, setOriginId] = useState("");
+    const [destinyId, setDestinyId] = useState("");
+    const [vehicleId, setVehicleId] = useState("");
+    const [plate, setPlate] = useState("");
+    const [estimatedDate, setEstimatedDate] = useState("");
+    const [distanceKm, setDistanceKm] = useState("--");
+    const [baseTariff, setBaseTariff] = useState(null);
+    const [correctorCost, setCorrectorCost] = useState(null);
+    const [finalCost, setFinalCost] = useState(null);
 
-    // Obtener vehículos
-    fetch("/api/vehiculos")
-      .then((response) => response.json())
-      .then((data) => setVehiculos(data));
+   
+    useEffect(() => {
+        actions.getLocations();
+        actions.getVehicles();
+    }, [actions]);
 
-    // Obtener localidades
-    fetch("/api/localidades")
-      .then((response) => response.json())
-      .then((data) => setLocalidades(data));
-  }, []);
+   
+    useEffect(() => {
+        if (customerId) {
+            const selectedCustomer = store.customers.find(cust => cust.id == customerId);
+            if (selectedCustomer) setBaseTariff(parseFloat(selectedCustomer.cust_base_tariff).toFixed(2));
+        }
+    }, [customerId, store.customers]);
 
-  // Calcular la tarifa
-  useEffect(() => {
-    if (selectedVehicle && originLocation && destinationLocation) {
-      // Suponiendo que la tarifa depende del vehículo y la distancia entre localidades.
-      const calculateTariff = () => {
-        const distancia = calculateDistance(originLocation, destinationLocation);
-        const vehicleRate = getVehicleRate(selectedVehicle);
-        return vehicleRate * distancia;
-      };
+    
+    useEffect(() => {
+        if (vehicleId) {
+            const selectedVehicle = store.vehicles.find(veh => veh.id == vehicleId);
+            if (selectedVehicle) setCorrectorCost(parseFloat(selectedVehicle.corrector_cost).toFixed(2));
+        }
+    }, [vehicleId, store.vehicles]);
 
-      setTarifa(calculateTariff());
-    }
-  }, [selectedVehicle, originLocation, destinationLocation]);
+    
+    useEffect(() => {
+        if (originId && destinyId) {
+            actions.getDistance(originId, destinyId).then(distance => {
+                setDistanceKm(distance.toFixed(2));
 
-  // Función para obtener la tarifa dependiendo del vehículo
-  const getVehicleRate = (vehicleId) => {
-    const vehicle = vehiculos.find((v) => v.id === vehicleId);
-    return vehicle ? vehicle.tarifa : 0;
-  };
+                if (distance && baseTariff) {
+                    setFinalCost(((distance * parseFloat(baseTariff)) + parseFloat(correctorCost)).toFixed(2));
+                }
+            });
+        }
+    }, [originId, destinyId, baseTariff, correctorCost, actions]);
 
-  // Función para calcular la distancia entre dos localidades (ejemplo simple)
-  const calculateDistance = (origin, destination) => {
-    // Aquí debería ir la lógica para calcular la distancia real entre localidades
-    // Esto podría hacerse con una API de mapas o alguna lógica de distancias predeterminadas
-    return Math.abs(origin - destination); // Esto es solo un ejemplo.
-  };
+    const isFormValid = () => {
+        return originId && destinyId && vehicleId && plate && estimatedDate;
+    };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Aquí iría la lógica para crear el pedido con los datos seleccionados.
-    console.log({
-      vehicle: selectedVehicle,
-      origin: originLocation,
-      destination: destinationLocation,
-      tarifa,
-    });
+    const handleSubmit = async (event) => {
+        event.preventDefault();
 
-    // Redirigir después de crear el pedido
-    navigate("/cliente/pedidos");
-  };
+        const orderData = {
+            customer_id: customerId,
+            origin_id: originId,
+            destiny_id: destinyId,
+            vehicle_id: vehicleId,
+            plate,
+            estimated_date_end: estimatedDate,
+        };
 
-  return (
-    <div className="container-fluid p-0">
-      <header className="bg-secondary text-white text-center py-5">
-        <h1 className="display-4">Crear Nuevo Pedido</h1>
-        <p className="lead">Solicita el transporte de tu vehículo rápidamente.</p>
-      </header>
+        const success = await actions.addOrder(orderData);
+        if (success) navigate("/customer/orders"); // Redirigir a la página de pedidos del cliente
+    };
 
-      <section className="container py-5">
-        <h2 className="text-center mb-4">Formulario de Nuevo Pedido</h2>
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card shadow-sm">
-              <div className="card-body">
+    return (
+        <div className="container-fluid p-0">
+            <header className="bg-secondary text-white text-center py-5">
+                <h1 className="display-4">Nuevo pedido de cliente</h1>
+            </header>
+            <div className="card container w-100 mt-5" style={{ maxWidth: 700, padding: '1rem' }}>
+                <h1 className="h3 fw-bold text-center my-2">Datos</h1>
                 <form onSubmit={handleSubmit}>
-                  <div className="form-group">
-                    <label htmlFor="vehicle">Selecciona tu Vehículo</label>
-                    <select
-                      className="form-control"
-                      id="vehicle"
-                      value={selectedVehicle}
-                      onChange={(e) => setSelectedVehicle(e.target.value)}
-                    >
-                      <option value="">Selecciona un vehículo</option>
-                      {vehiculos.map((vehiculo) => (
-                        <option key={vehiculo.id} value={vehiculo.id}>
-                          {vehiculo.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group mt-3">
-                    <label htmlFor="origin">Localidad de Origen</label>
-                    <select
-                      className="form-control"
-                      id="origin"
-                      value={originLocation}
-                      onChange={(e) => setOriginLocation(e.target.value)}
-                    >
-                      <option value="">Selecciona una localidad</option>
-                      {localidades.map((localidad) => (
-                        <option key={localidad.id} value={localidad.id}>
-                          {localidad.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group mt-3">
-                    <label htmlFor="destination">Localidad de Destino</label>
-                    <select
-                      className="form-control"
-                      id="destination"
-                      value={destinationLocation}
-                      onChange={(e) => setDestinationLocation(e.target.value)}
-                    >
-                      <option value="">Selecciona una localidad</option>
-                      {localidades.map((localidad) => (
-                        <option key={localidad.id} value={localidad.id}>
-                          {localidad.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group mt-3">
-                    <label>Tarifa Estimada:</label>
-                    <div className="alert alert-info">
-                      {tarifa !== null
-                        ? `La tarifa estimada es: €${tarifa}`
-                        : "Por favor, selecciona un vehículo y localidades para calcular la tarifa."}
+                  
+                    <div className="form-group">
+                        <label>Cliente</label>
+                        <input 
+                            type="text" 
+                            className="form-control" 
+                            value={store.currentCustomer?.company_name || "Cliente no encontrado"} 
+                            disabled 
+                        />
                     </div>
-                  </div>
 
-                  <button type="submit" className="btn btn-primary mt-3">
-                    Crear Pedido
-                  </button>
+                    <div className="d-flex gap-2">
+                        <div className="w-50">
+                            <label>Origen</label>
+                            <select className="form-control" onChange={(e) => setOriginId(e.target.value)} required>
+                                <option value="">Seleccione un Origen</option>
+                                {store.locations.map(location => (
+                                    <option key={location.id} value={location.id}>{location.city}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="w-50">
+                            <label>Destino</label>
+                            <select className="form-control" onChange={(e) => setDestinyId(e.target.value)} required>
+                                <option value="">Seleccione un Destino</option>
+                                {store.locations.map(location => (
+                                    <option key={location.id} value={location.id}>{location.city}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <label>Vehículo</label>
+                    <select className="form-control" onChange={(e) => setVehicleId(e.target.value)} required>
+                        <option value="">Seleccione un Vehículo</option>
+                        {store.vehicles.map(vehicle => (
+                            <option key={vehicle.id} value={vehicle.id}>{vehicle.brand} {vehicle.model}</option>
+                        ))}
+                    </select>
+
+                    <label>Matrícula</label>
+                    <input type="text" className="form-control" onChange={(e) => setPlate(e.target.value)} required />
+
+                    <label>Fecha Estimada de Entrega</label>
+                    <input type="date" className="form-control" onChange={(e) => setEstimatedDate(e.target.value)} required />
+
+                    <div className="tarifa mt-3 p-3 bg-light">
+                        <h5>Tarifa Estimada</h5>
+                        <p>Kilómetros: <b>{distanceKm !== "--" ? `${distanceKm} km` : "-- km"}</b></p>
+                        <p>Tarifa Base: <b>{baseTariff !== null ? `${baseTariff}€/km` : "-- €/km"}</b></p>
+                        <p>Suplemento vehículo: <b>{correctorCost !== null ? `${correctorCost}€` : "-- €"}</b></p>
+                        {finalCost !== null && (
+                            <p><b>Total (IVA no incluido): {finalCost}€</b></p>
+                        )}
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        className="btn btn-primary my-3 w-100" 
+                        disabled={!isFormValid()}
+                    >
+                        CREAR PEDIDO
+                    </button>
+
+                    <button 
+                        type="button" 
+                        className="btn btn-secondary my-3 w-100" 
+                        onClick={() => navigate("customer-orders")}
+                    >
+                        CANCELAR
+                    </button>
                 </form>
-              </div>
             </div>
-          </div>
         </div>
-      </section>
-    </div>
-  );
+    );
 };
