@@ -4,7 +4,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
-
 class Users(db.Model):  # Incluir Customer y Provider para creacion de contactos?
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(), unique=False, nullable=False)
@@ -157,7 +156,7 @@ class Orders(db.Model):
     final_cost = db.Column(db.Float(), unique=False, nullable=True)
     prov_base_tariff = db.Column(db.Float(), unique=False, nullable=True)
     cust_base_tariff = db.Column(db.Float(), unique=False, nullable=True)
-    status_order = db.Column(db.Enum('Order created', 'Order acepted', 'In transit', 'Delivered', 'Cancel', name='status_order_type'), unique=False, nullable=False)
+    status_order = db.Column(db.Enum('Order created', 'Order accepted', 'In transit', 'Delivered', 'Cancel', name='status_order'), unique=False, nullable=False)
     order_created_date = db.Column(db.Date(), unique=False, nullable=False, default=datetime.utcnow)
     order_acepted_date = db.Column(db.Date(), unique=False, nullable=True)
     in_transit_date = db.Column(db.Date(), unique=False, nullable=True)

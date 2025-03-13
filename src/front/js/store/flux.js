@@ -799,7 +799,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			
 				const options = {
-					method: "PUT",
+					method: "",
 					headers: {
 						"Content-Type": "application/json",
 						"Authorization": `Bearer ${token}`

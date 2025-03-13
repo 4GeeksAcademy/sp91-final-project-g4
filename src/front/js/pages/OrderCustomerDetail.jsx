@@ -9,9 +9,10 @@ export const OrderCustomerDetail = () => {
     const location = useLocation();
     const order = location.state?.order;
 
-    const [selectedProvider, setSelectedProvider] = useState("");
+    const [selectedProvider, setSelectedProvider] = useState(order.provider_id || "");
     const [observations, setObservations] = useState("");
     const [orderStatus, setOrderStatus] = useState(order.status_order);
+    const [isProviderAssigned, setIsProviderAssigned] = useState(!!order.provider_id);
 
     useEffect(() => {
         actions.getProviders();
@@ -21,28 +22,35 @@ export const OrderCustomerDetail = () => {
         return <p>No hay detalles disponibles.</p>;
     }
 
-    // ✅ Cancelar Pedido
+    // ✅ Cancelar pedido y actualizar el estado
     const handleCancelOrder = async () => {
         const success = await actions.cancelOrder(order.id);
         if (success) {
             setOrderStatus("Cancel");
+            toast.success("Orden cancelada correctamente.");
+            await actions.getOrders(); // ✅ Actualiza la lista de pedidos
+        } else {
+            toast.error("Error al cancelar la orden.");
         }
     };
 
-    // ✅ Asignar Proveedor y Crear Traslado
+    // ✅ Asignar proveedor y actualizar la lista de traslados y pedidos
     const handleAssignProvider = async () => {
         if (!selectedProvider) {
-            toast.warning("Selecciona un proveedor antes de asignar.");
+            toast.error("Selecciona un proveedor antes de asignar.");
             return;
         }
-    
+
         const success = await actions.assignProvider(order.id, selectedProvider, observations);
         if (success) {
+            setOrderStatus("Order accepted");
+            setIsProviderAssigned(true);
+            await actions.getOrders(); // ✅ Actualiza la lista de pedidos de clientes
+            await actions.getProviderOrders(); // ✅ Asegura que la orden aparece en traslados de proveedores
             toast.success("Proveedor asignado correctamente.");
-            await actions.getOrders(); // ✅ Asegurar que el store tenga la última versión de las órdenes
-            navigate("/admin/orders-customers"); // ✅ Redirigir después de asignar
+            navigate("/admin/orders-customers"); // ✅ Redirigir a la lista de pedidos de clientes
         } else {
-            toast.error("Error al asignar el proveedor. Inténtalo de nuevo.");
+            toast.error("Error al asignar el proveedor.");
         }
     };
 
@@ -56,17 +64,12 @@ export const OrderCustomerDetail = () => {
                     <p><strong>Cliente:</strong> {order.customerCompanyName} | <strong>Fecha:</strong> {order.order_created_date}</p>
                 </div>
 
-                {/* 🔹 Botón de Volver a Pedidos de Cliente */}
                 <div className="d-flex justify-content-between align-items-center mb-3">
                     <button className="btn btn-primary" onClick={() => navigate("/admin/orders-customers")}>
                         Volver a Pedidos de Cliente
                     </button>
-                    <span className={`badge ${orderStatus === "Cancel" ? "bg-danger" : "bg-success"}`}>
-                        {orderStatus === "Cancel"
-                            ? "Orden Cancelada"
-                            : orderStatus === "Order accepted"
-                                ? "Orden asignada"
-                                : orderStatus}
+                    <span className={`badge ${orderStatus === "Cancel" ? "bg-danger" : (orderStatus === "Order accepted" ? "bg-primary" : "bg-success")}`}>
+                        {orderStatus === "Cancel" ? "Orden Cancelada" : (orderStatus === "Order accepted" ? "Orden Aceptada" : orderStatus)}
                     </span>
                 </div>
 
@@ -80,8 +83,15 @@ export const OrderCustomerDetail = () => {
                             <input type="text" className="form-control" value={order.origin_region || "N/A"} readOnly />
                             <label>C.P</label>
                             <input type="text" className="form-control" value={order.origin_zip || "N/A"} readOnly />
+                            <label>Contacto Origen</label>
+                            <input type="text" className="form-control" value={order.origin_contact || "N/A"} readOnly />
+                            <label>Teléfono Origen</label>
+                            <input type="text" className="form-control" value={order.origin_phone || "N/A"} readOnly />
+                            <label>Fecha de aceptación del pedido</label>
+                            <input className="form-control" value={order.order_created_date} readOnly />
                         </div>
                     </div>
+
                     <div className="col-md-6">
                         <div className="card p-3">
                             <h5 className="btn btn-success disabled rounded text-center">DESTINO</h5>
@@ -91,8 +101,15 @@ export const OrderCustomerDetail = () => {
                             <input type="text" className="form-control" value={order.destiny_region || "N/A"} readOnly />
                             <label>C.P</label>
                             <input type="text" className="form-control" value={order.destiny_zip || "N/A"} readOnly />
+                            <label>Contacto Destino</label>
+                            <input type="text" className="form-control" value={order.destiny_contact || "N/A"} readOnly />
+                            <label>Teléfono Destino</label>
+                            <input type="text" className="form-control" value={order.destiny_phone || "N/A"} readOnly />
+                            <label>Fecha Estimada Entrega</label>
+                            <input className="form-control" value={order.estimated_date_end} readOnly />
                         </div>
                     </div>
+
                     <div className="col-md-12">
                         <div className="card p-3 mb-3">
                             <h5 className="btn btn-secondary disabled rounded text-center">TARIFA</h5>
@@ -110,23 +127,25 @@ export const OrderCustomerDetail = () => {
                                         <td>Traslado: {order.origin} - {order.destination}</td>
                                         <td>{order.final_cost ? order.final_cost.toFixed(2) : "N/A"} €</td>
                                     </tr>
+                                    <tr>
+                                        <td>Suplemento tipo de vehículo</td>
+                                        <td>{order.corrector_cost ? order.corrector_cost.toFixed(2) : "0.00"} €</td>
+                                    </tr>
+                                    <tr className="table-success">
+                                        <td><strong>TARIFA (IVA no incluido)</strong></td>
+                                        <td><strong>{order.final_cost ? order.final_cost.toFixed(2) : "N/A"} €</strong></td>
+                                    </tr>
                                 </tbody>
                             </table>
-                            {orderStatus !== "Cancel" && (
-                                <button className="btn btn-danger mt-3 w-100" onClick={handleCancelOrder}>
-                                    Cancelar Pedido
-                                </button>
-                            )}
                         </div>
 
-                        {/* 🔹 Asignar Traslado a Proveedor */}
                         <div className="card p-3">
                             <h6>Asignar Traslado a Proveedor</h6>
                             <select
                                 className="form-control"
                                 value={selectedProvider}
                                 onChange={(e) => setSelectedProvider(e.target.value)}
-                                disabled={orderStatus === "Cancel"}
+                                disabled={isProviderAssigned || orderStatus === "Cancel"} 
                             >
                                 <option value="">Seleccione un Proveedor</option>
                                 {store.providers.map(provider => (
@@ -135,28 +154,33 @@ export const OrderCustomerDetail = () => {
                                     </option>
                                 ))}
                             </select>
-                            <label className="mt-3">Observaciones para el Proveedor</label>
-                            <textarea
-                                className="form-control"
-                                rows="3"
-                                value={observations}
-                                onChange={(e) => setObservations(e.target.value)}
-                                disabled={orderStatus === "Cancel"}
-                            ></textarea>
-                            <button
-                                className="btn btn-primary mt-3 w-100"
+                            <button 
+                                className="btn btn-primary mt-3 w-100" 
                                 onClick={handleAssignProvider}
-                                disabled={orderStatus === "Cancel"}
+                                disabled={isProviderAssigned || orderStatus === "Cancel"}
                             >
                                 Asignar Traslado
                             </button>
                         </div>
+
+                        {orderStatus !== "Cancel" && (
+                            <button className="btn btn-danger mt-3 w-100" onClick={handleCancelOrder}>
+                                Cancelar Pedido
+                            </button>
+                        )}
                     </div>
                 </div>
             </section>
         </div>
     );
 };
+
+
+
+
+
+
+
 
 
 

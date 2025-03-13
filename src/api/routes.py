@@ -8,6 +8,7 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import get_jwt
 from datetime import datetime
 from api.models import db, Users, Vehicles, Customers, OrderDocuments, Providers, Locations, Orders, Contact
+import enum
 
 
 api = Blueprint('api', __name__)
@@ -738,7 +739,6 @@ def orders():
         return jsonify(response_body), 201
 
 
-
 @api.route('/orders/<int:order_id>', methods=['GET' , 'PUT', 'DELETE'])  # PENDING - MANEJAR ESTADOS
 @jwt_required()
 def get_order(order_id):
@@ -758,7 +758,9 @@ def get_order(order_id):
             return jsonify(response_body), 200
         if request.method == 'PUT':  # Modificar orden
             data = request.json
-            order.status_order = data.get("status", order.status_order)
+            valid_statuses = ["Order created", "Order accepted", "In progress", "Delivered", "Canceled"]
+            if "status" in data:
+                order.status_order = data["status"]
             order.final_cost = data.get("total_price", order.final_cost)
             order.delivered_date = data.get("delivery_date", order.delivered_date)
             db.session.commit()
@@ -788,10 +790,17 @@ def get_order(order_id):
     return jsonify({"message": "Unauthorized access"}), 403  # Si no cumple ninguna regla, denegar acceso
 
 
-@api.route('/assign-providers/<int:order_id>', methods=['PUT'])  # OK
+@api.route('/assign-providers/<int:order_id>', methods=['PATCH'])  # OK
 # Endpoint para que un admin asigne un proveedor a la orden
 @jwt_required()
 def assign_provider(order_id):
+    class StatusOrderType:
+        ORDER_CREATED = 'Order created'
+        ORDER_ACCEPTED = 'Order accepted'
+        IN_TRANSIT = 'In transit'
+        DELIVERED = 'Delivered'
+        CANCEL = 'Cancel'
+
     response_body = {}
     claims = get_jwt()
     user_role = claims.get("role")
@@ -822,7 +831,7 @@ def assign_provider(order_id):
     final_cost_provider = (prov_base_tariff * distance_km) + order.corrector_cost
     order.provider_id = provider_id  # Asignar proveedor a la orden
     order.final_cost = round(final_cost_provider, 2)
-    order.status_order = "Order accepted"
+    order.status_order = StatusOrderType.ORDER_CREATED
     db.session.commit()
     response_body["message"] = "Provider assigned successfully"
     response_body["order"] = order.serialize()
