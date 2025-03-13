@@ -8,6 +8,7 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import get_jwt
 from datetime import datetime
 from api.models import db, Users, Vehicles, Customers, OrderDocuments, Providers, Locations, Orders, Contact
+import enum
 
 
 api = Blueprint('api', __name__)
@@ -618,10 +619,7 @@ def location(id):
         return response_body, 200
     
 
-@api.route('/orders', methods=['GET', 'POST'])  # OK
-# admin ve lista de todas las ordenes
-# customer ve lista de las suyas
-# provider ve lista de las suyas
+@api.route('/orders', methods=['GET', 'POST'])
 @jwt_required()
 def orders():
     response_body = {}
@@ -632,7 +630,9 @@ def orders():
     customer_id = claims.get("customer_id")
     provider_id = claims.get("provider_id")
     print(f"🔍 JWT Identity (Email): {user_email}")
-    if request.method == 'GET':  # GET: Obtener órdenes según el rol del usuario     
+    
+    # 📌 Obtener órdenes (GET)
+    if request.method == 'GET':
         query = db.select(Orders)
         if user_role == "customer":  # Solo ve sus propias órdenes          
             customer = db.session.execute(db.select(Customers).where(Customers.id == customer_id)).scalar()
@@ -647,50 +647,67 @@ def orders():
         # Admin puede ver todas las órdenes
         orders = db.session.execute(query).scalars()
         result = [order.serialize() for order in orders]
+        
         response_body['message'] = "List of orders"
         response_body['results'] = result
-        return jsonify(response_body), 200  
-    if request.method == 'POST':  # POST: Solo clientes y administradores pueden crear órdenes sin proveedor asignado
+        return jsonify(response_body), 200
+
+    # 📌 Crear una nueva orden (POST)
+    if request.method == 'POST':
         if user_role not in ["customer", "admin"]:
             return jsonify({"message": "Only customers and admins can create orders"}), 403
+        
         data = request.json
         origin_id = data.get("origin_id")
         destination_id = data.get("destiny_id")
-        vehicle_id = data.get("vehicle_id")        
-        if not origin_id or not destination_id or not vehicle_id:  # Validaciones - Si o si hay que rellenar para crear una orden
-            return jsonify({"message": "Missing required fields (origin_id, destiny_id, vehicle_id)"}), 400       
-        origin = db.session.execute(db.select(Locations).where(Locations.id == origin_id)).scalar() # Buscar ubicaciones en la BD
-        destination = db.session.execute(db.select(Locations).where(Locations.id == destination_id)).scalar()
+        vehicle_id = data.get("vehicle_id")
+
+        # 🔹 Validación de campos obligatorios
+        if not origin_id or not destination_id or not vehicle_id:
+            return jsonify({"message": "Missing required fields (origin_id, destiny_id, vehicle_id)"}), 400
+        
+        # 🔹 Buscar ubicaciones y vehículo
+        origin = db.session.get(Locations, origin_id)
+        destination = db.session.get(Locations, destination_id)
+        vehicle = db.session.get(Vehicles, vehicle_id)
+        customer = db.session.get(Customers, data.get("customer_id"))
+
         if not origin or not destination:
-            return jsonify({"message": "Origin or destination not found"}), 404      
-        vehicle = db.session.get(Vehicles, vehicle_id)  # Buscar vehículo y obtener corrector_cost
+            return jsonify({"message": "Origin or destination not found"}), 404
         if not vehicle:
             return jsonify({"message": "Vehicle not found"}), 404
-        corrector_cost = vehicle.corrector_cost 
-        customer = db.session.execute(db.select(Customers).where(Customers.id == data.get("customer_id"))).scalar()  # Buscar cliente en la BD
         if not customer:
-            return jsonify({"message": "Customer not found"}), 404       
-        url = "https://api.openrouteservice.org/v2/matrix/driving-car"  # Obtener distancia en tiempo real usando la API externa
+            return jsonify({"message": "Customer not found"}), 404
+
+        corrector_cost = vehicle.corrector_cost  # Ajuste de costo por tipo de vehículo
+
+        # 🔹 Calcular distancia usando OpenRouteService
+        url = "https://api.openrouteservice.org/v2/matrix/driving-car"
         headers = {"Authorization": ORS_API_KEY, "Content-Type": "application/json"}
-        body = {"locations": [
-                [origin.longitude, origin.latitude],
-                [destination.longitude, destination.latitude]],"metrics": ["distance"]}
+        body = {
+            "locations": [[origin.longitude, origin.latitude], [destination.longitude, destination.latitude]],
+            "metrics": ["distance"]
+        }
+
         try:
             response = requests.post(url, json=body, headers=headers)
             response_data = response.json()
             distance_meters = response_data["distances"][0][1]
             distance_km = round(distance_meters / 1000, 2)
         except Exception as e:
-            return jsonify({"message": "Error connecting to OpenRouteService", "error": str(e)}), 500        
-        cust_base_tariff = customer.cust_base_tariff  # Calcular tarifa del cliente
-        final_cost_customer = (cust_base_tariff * distance_km) + corrector_cost      
+            return jsonify({"message": "Error connecting to OpenRouteService", "error": str(e)}), 500
+
+        # 🔹 Calcular tarifa del cliente
+        cust_base_tariff = customer.cust_base_tariff
+        final_cost_customer = (cust_base_tariff * distance_km) + corrector_cost
+
+        # 🔹 Crear nueva orden con datos adicionales
         new_order = Orders(
-            # Crear orden SIN proveedor asignado -- agregar comments puede ser null 
             plate=data.get("plate"),
             distance_km=distance_km,
             estimated_date_end=data.get("estimated_date_end"),
             corrector_cost=corrector_cost,
-            final_cost=final_cost_customer,  
+            final_cost=final_cost_customer,
             cust_base_tariff=cust_base_tariff,
             status_order="Order created",
             order_created_date=datetime.utcnow(),
@@ -698,13 +715,21 @@ def orders():
             vehicle_id=vehicle_id,
             origin_id=origin_id,
             destiny_id=destination_id,
-            comment=data.get("comment"))
+            comment=data.get("comment"),
+            origin_contact=data.get("origin_contact"),
+            origin_phone=data.get("origin_phone"),
+            destiny_contact=data.get("destiny_contact"),
+            destiny_phone=data.get("destiny_phone"),
+        )
+
         db.session.add(new_order)
-        db.session.commit()     
-        response_body["message"] = "Order created successfully (without provider assigned)"   # Respuesta con detalles de la orden creada
+        db.session.commit()
+
+        response_body["message"] = "Order created successfully (without provider assigned)"
         response_body["order"] = new_order.serialize()
         response_body["distance_km"] = distance_km
         response_body["final_cost_customer"] = round(final_cost_customer, 2)
+
         return jsonify(response_body), 201
 
 
@@ -727,7 +752,9 @@ def get_order(order_id):
             return jsonify(response_body), 200
         if request.method == 'PUT':  # Modificar orden
             data = request.json
-            order.status_order = data.get("status", order.status_order)
+            valid_statuses = ["Order created", "Order accepted", "In progress", "Delivered", "Canceled"]
+            if "status" in data:
+                order.status_order = data["status"]
             order.final_cost = data.get("total_price", order.final_cost)
             order.delivered_date = data.get("delivery_date", order.delivered_date)
             db.session.commit()
@@ -757,10 +784,17 @@ def get_order(order_id):
     return jsonify({"message": "Unauthorized access"}), 403  # Si no cumple ninguna regla, denegar acceso
 
 
-@api.route('/assign-providers/<int:order_id>', methods=['PUT'])  # OK
+@api.route('/assign-providers/<int:order_id>', methods=['PATCH'])  # OK
 # Endpoint para que un admin asigne un proveedor a la orden
 @jwt_required()
 def assign_provider(order_id):
+    class StatusOrderType:
+        ORDER_CREATED = 'Order created'
+        ORDER_ACCEPTED = 'Order accepted'
+        IN_TRANSIT = 'In transit'
+        DELIVERED = 'Delivered'
+        CANCEL = 'Cancel'
+
     response_body = {}
     claims = get_jwt()
     user_role = claims.get("role")
@@ -790,8 +824,8 @@ def assign_provider(order_id):
     prov_base_tariff = provider.prov_base_tariff  # Calcular tarifa del proveedor
     final_cost_provider = (prov_base_tariff * distance_km) + order.corrector_cost
     order.provider_id = provider_id  # Asignar proveedor a la orden
-    order.final_cost = final_cost_provider,
-    order.status_order_type = "Order acepted",
+    order.final_cost = round(final_cost_provider, 2)
+    order.status_order = StatusOrderType.ORDER_CREATED
     db.session.commit()
     response_body["message"] = "Provider assigned successfully"
     response_body["order"] = order.serialize()

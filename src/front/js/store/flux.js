@@ -44,6 +44,8 @@ const getState = ({ getStore, getActions, setStore }) => {
 				setStore({ message: data.message })
 				return;
 			},
+		
+
 			login: async (dataToSend) => {
 				const uri = `${process.env.BACKEND_URL}/api/login`;
 				const options = {
@@ -98,6 +100,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 				const data = await response.json()
 			},
+
 			addUser: async (dataToSend) => {
 				const uri = `${process.env.BACKEND_URL}/api/users`;
 				const token = localStorage.getItem("token"); // ✅ Obtener el token
@@ -175,6 +178,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.error("❌ Error en getUser:", error);
 				}
 			},
+
 			editUser: async (userId, dataToSend) => {
 				const uri = `${process.env.BACKEND_URL}/api/users/${userId}`;
 				
@@ -282,7 +286,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return false;
 				}
 			},
-
 
 			getCustomers: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/customers`;
@@ -400,6 +403,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 				getActions().getCustomers();
 			},
+
 			editCustomer: async (customerId, dataToSend) => {
 				try {
 					const uri = `${process.env.BACKEND_URL}/api/customers/${customerId}`;
@@ -670,7 +674,6 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			},
 
-
 			getOrders: async () => {
 				const uri = `${process.env.BACKEND_URL}/api/orders`;
 				const options = {
@@ -795,6 +798,80 @@ const getState = ({ getStore, getActions, setStore }) => {
 					return true;
 				} catch (error) {
 					console.error("❌ Error en addOrder:", error);
+					return false;
+				}
+			},
+
+			assignProvider: async (orderId, providerId, observations) => {
+				const uri = `${process.env.BACKEND_URL}/api/assign-providers/${orderId}`;
+				const token = localStorage.getItem("token");
+			
+				if (!token) {
+					console.error("❌ No hay token disponible, no se puede asignar proveedor.");
+					return false;
+				}
+			
+				const options = {
+					method: "",
+					headers: {
+						"Content-Type": "application/json",
+						"Authorization": `Bearer ${token}`
+					},
+					body: JSON.stringify({ provider_id: providerId, observations })
+				};
+			
+				try {
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						console.error(`❌ Error al asignar proveedor: ${response.status}`);
+						return false;
+					}
+			
+					const data = await response.json();
+					console.log("✅ Proveedor asignado correctamente:", data);
+			
+					// 🔹 Asegurar que el store se actualiza con la orden modificada
+					const store = getStore();
+					const updatedOrders = store.orders.map(order =>
+						order.id === orderId ? { ...order, provider_id: providerId, status_order: "Order accepted" } : order
+					);
+					setStore({ orders: updatedOrders });
+			
+					// 🔹 Obtener datos actualizados desde el backend
+					await getActions().getOrders();
+			
+					return true;
+				} catch (error) {
+					console.error("❌ Error en assignProvider:", error);
+					return false;
+				}
+			},
+
+			cancelOrder: async (orderId) => {
+				const uri = `${process.env.BACKEND_URL}/api/orders/${orderId}`;
+				const options = {
+					method: "PUT",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${localStorage.getItem("token")}`,
+					},
+					body: JSON.stringify({ status: "Cancel" }),
+				};
+			
+				try {
+					const response = await fetch(uri, options);
+					if (!response.ok) {
+						console.error(`❌ Error al cancelar orden: ${response.status}`);
+						return false;
+					}
+			
+					const data = await response.json();
+					console.log("✅ Orden cancelada:", data);
+					
+					getActions().getOrders(); // Actualiza la lista de órdenes
+					return true;
+				} catch (error) {
+					console.error("❌ Error en cancelOrder:", error);
 					return false;
 				}
 			},
