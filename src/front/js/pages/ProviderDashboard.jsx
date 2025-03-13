@@ -17,22 +17,12 @@ export const ProviderDashboard= () => {
         <section className="container py-5">
           <h2 className="text-center mb-4">Tus Opciones</h2>
           <div className="row">
-            <div className="col-md-6">
+            <div className="col">
               <div className="card shadow-sm">
                 <div className="card-body text-center">
                   <h3 className="card-title">Pedidos</h3>
                   <p className="card-text">Consulta el estado de tus pedidos en curso.</p>
-                  <Link to="/customer-orders" className="btn btn-primary">Ver Mis Traslados</Link>
-                </div>
-              </div>
-            </div>
-  
-            <div className="col-md-6">
-              <div className="card shadow-sm">
-                <div className="card-body text-center">
-                  <h3 className="card-title">Nuevo Traslado</h3>
-                  <p className="card-text">Consulta de una nueva orden.</p>
-                  <Link to="/new-order" className="btn btn-success">Ver Nuevo Pedido</Link>
+                  <Link to="/provider-orders" className="btn btn-primary">Ver Mis Traslados</Link>
                 </div>
               </div>
             </div>
