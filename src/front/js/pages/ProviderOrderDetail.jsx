@@ -3,77 +3,70 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 import { toast } from "react-toastify";
 
-export const OrderCustomerDetail = () => {
+export const ProviderOrderDetail = () => {
     const navigate = useNavigate();
     const { store, actions } = useContext(Context);
     const location = useLocation();
     const order = location.state?.order;
 
-    const [selectedProvider, setSelectedProvider] = useState(order.provider_id || "");
-    const [observations, setObservations] = useState("");
     const [orderStatus, setOrderStatus] = useState(order.status_order);
-    const [isProviderAssigned, setIsProviderAssigned] = useState(!!order.provider_id);
+    const [providerTariff, setProviderTariff] = useState(order.final_cost || 0);
 
     useEffect(() => {
         actions.getProviders();
+        calculateProviderTariff();
     }, []);
 
     if (!order) {
         return <p>No hay detalles disponibles.</p>;
     }
 
-    // ✅ Cancelar pedido y actualizar el estado
-    const handleCancelOrder = async () => {
-        const success = await actions.cancelOrder(order.id);
-        if (success) {
-            setOrderStatus("Cancel");
-            toast.success("Orden cancelada correctamente.");
-            await actions.getOrders(); // ✅ Actualiza la lista de pedidos
-        } else {
-            toast.error("Error al cancelar la orden.");
+    // ✅ Calcula la tarifa del proveedor basado en la distancia
+    const calculateProviderTariff = () => {
+        const provider = store.providers.find(p => p.id === order.provider_id);
+        if (provider) {
+            const newCost = (provider.prov_base_tariff * order.distance_km) + (order.corrector_cost || 0);
+            setProviderTariff(newCost.toFixed(2));
         }
     };
 
-    // ✅ Asignar proveedor y actualizar la lista de traslados y pedidos
-    const handleAssignProvider = async () => {
-        if (!selectedProvider) {
-            toast.error("Selecciona un proveedor antes de asignar.");
-            return;
-        }
-
-        const success = await actions.assignProvider(order.id, selectedProvider, observations);
+    // ✅ Función para actualizar el estado (Recogido -> Entregado)
+    const handleStatusChange = async () => {
+        let newStatus = orderStatus === "Init" ? "Delivered" : "Init";
+        const success = await actions.updateOrderStatus(order.id, newStatus);
         if (success) {
-            setOrderStatus("Order accepted");
-            setIsProviderAssigned(true);
-            await actions.getOrders(); // ✅ Actualiza la lista de pedidos de clientes
-            await actions.getProviderOrders(); // ✅ Asegura que la orden aparece en traslados de proveedores
-            toast.success("Proveedor asignado correctamente.");
-            navigate("/admin/orders-customers"); // ✅ Redirigir a la lista de pedidos de clientes
+            setOrderStatus(newStatus);
+            toast.success(`Estado cambiado a ${newStatus === "Init" ? "Recogido" : "Entregado"}`);
         } else {
-            toast.error("Error al asignar el proveedor.");
+            toast.error("Error al actualizar el estado.");
         }
     };
 
     return (
         <div className="container-fluid p-0">
             <header className="container-fluid bg-secondary text-white text-center py-3">
-                <h1 className="display-6">DETALLE DEL PEDIDO</h1>
+                <h1 className="display-6">DETALLE DEL TRASLADO</h1>
             </header>
             <section className="container py-5">
                 <div className="mb-3 border-bottom">
-                    <p><strong>Cliente:</strong> {order.customerCompanyName} | <strong>Fecha:</strong> {order.order_created_date}</p>
+                    <p><strong>Cliente:</strong> AutoGeek Logistic | <strong>Contacto:</strong> 4Geeks</p>
+                    <p><strong>Fecha:</strong> {order.order_created_date}</p>
                 </div>
 
+                {/* 🔹 Botón de Volver a Traslados de Proveedores */}
                 <div className="d-flex justify-content-between align-items-center mb-3">
-                    <button className="btn btn-primary" onClick={() => navigate("/admin/orders-customers")}>
-                        Volver a Pedidos de Cliente
+                    <button className="btn btn-primary" onClick={() => navigate("/provider-orders")}>
+                        Volver a Traslados de Proveedores
                     </button>
-                    <span className={`badge ${orderStatus === "Cancel" ? "bg-danger" : (orderStatus === "Order accepted" ? "bg-primary" : "bg-success")}`}>
-                        {orderStatus === "Cancel" ? "Orden Cancelada" : (orderStatus === "Order accepted" ? "Orden Aceptada" : orderStatus)}
+                    
+                    {/* 🔹 Estado del pedido */}
+                    <span className={`badge ${orderStatus === "Delivered" ? "bg-success" : "bg-warning"}`}>
+                        {orderStatus === "Delivered" ? "Entregado" : "Recogido"}
                     </span>
                 </div>
 
                 <div className="row">
+                    {/* 🔹 SECCIÓN ORIGEN */}
                     <div className="col-md-6">
                         <div className="card p-3 mb-3">
                             <h5 className="btn btn-info disabled rounded text-center">ORIGEN</h5>
@@ -92,6 +85,7 @@ export const OrderCustomerDetail = () => {
                         </div>
                     </div>
 
+                    {/* 🔹 SECCIÓN DESTINO */}
                     <div className="col-md-6">
                         <div className="card p-3">
                             <h5 className="btn btn-success disabled rounded text-center">DESTINO</h5>
@@ -120,55 +114,46 @@ export const OrderCustomerDetail = () => {
                                         <td>{order.distance_km ? order.distance_km.toFixed(2) : "N/A"} km</td>
                                     </tr>
                                     <tr>
-                                        <td>Tarifa base</td>
-                                        <td>{order.cust_base_tariff ? order.cust_base_tariff.toFixed(2) : "N/A"} €/km</td>
+                                        <td>Tarifa base del proveedor</td>
+                                        <td>{providerTariff} €</td>
                                     </tr>
                                     <tr>
                                         <td>Traslado: {order.origin} - {order.destination}</td>
-                                        <td>{order.final_cost ? order.final_cost.toFixed(2) : "N/A"} €</td>
+                                        <td>{providerTariff} €</td>
                                     </tr>
                                     <tr>
                                         <td>Suplemento tipo de vehículo</td>
                                         <td>{order.corrector_cost ? order.corrector_cost.toFixed(2) : "0.00"} €</td>
                                     </tr>
                                     <tr className="table-success">
-                                        <td><strong>TARIFA (IVA no incluido)</strong></td>
-                                        <td><strong>{order.final_cost ? order.final_cost.toFixed(2) : "N/A"} €</strong></td>
+                                        <td><strong>TARIFA FINAL</strong></td>
+                                        <td><strong>{providerTariff} €</strong></td>
                                     </tr>
                                 </tbody>
                             </table>
-                            {/* 🔴 Botón de cancelar pedido (lo agregamos aquí dentro) */}
-                            {orderStatus !== "Cancel" && (
-                                <button className="btn btn-danger mt-3 w-100" onClick={handleCancelOrder}>
-                                    Cancelar Pedido
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="card p-3">
-                            <h6>Asignar Traslado a Proveedor</h6>
-                            <select
-                                className="form-control"
-                                value={selectedProvider}
-                                onChange={(e) => setSelectedProvider(e.target.value)}
-                                disabled={isProviderAssigned || orderStatus === "Cancel"} 
-                            >
-                                <option value="">Seleccione un Proveedor</option>
-                                {store.providers.map(provider => (
-                                    <option key={provider.id} value={provider.id}>
-                                        {provider.company_name}
-                                    </option>
-                                ))}
-                            </select>
-                            <button 
-                                className="btn btn-primary mt-3 w-100" 
-                                onClick={handleAssignProvider}
-                                disabled={isProviderAssigned || orderStatus === "Cancel"}
-                            >
-                                Asignar Traslado
-                            </button>
                         </div>
                     </div>
+                </div>
+
+                {/* 🔹 Observaciones del Proveedor */}
+                <div className="card p-3 mb-3">
+                    <h6>Observaciones proveedor</h6>
+                    <textarea
+                        className="form-control"
+                        rows="3"
+                        value={order.comment || ""}
+                        readOnly
+                    ></textarea>
+                </div>
+
+                {/* 🔹 Botón de Recogido/Entregado */}
+                <div className="card p-3 text-center">
+                    <button
+                        className={`btn ${orderStatus === "Init" ? "btn-success" : "btn-primary"} w-100`}
+                        onClick={handleStatusChange}
+                    >
+                        {orderStatus === "Init" ? "Marcar como Entregado" : "Marcar como Recogido"}
+                    </button>
                 </div>
             </section>
         </div>

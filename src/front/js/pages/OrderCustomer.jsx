@@ -65,6 +65,12 @@ export const OrderCustomer = () => {
                         statusClass = "";
                 }
 
+                // ✅ Asegurar que el estado cambia si hay proveedor asignado
+                if (order.provider_id && order.status_order === "Order created") {
+                formattedStatus = "Orden Aceptada";
+                statusClass = "text-primary";
+            }
+
                 return {
                     ...order,
                     orderCreatedDate: order.order_created_date ? new Date(order.order_created_date).toLocaleDateString() : "Desconocido",

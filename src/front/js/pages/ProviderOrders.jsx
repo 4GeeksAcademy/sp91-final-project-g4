@@ -7,7 +7,7 @@ export const ProviderOrders = () => {
   const { store, actions } = useContext(Context);
 
   const handleViewDetails = (order) => {
-    navigate("/admin/order-provider-detail", { state: { order } });
+    navigate("/provider-order-detail", { state: { order } });
   };
 
 
@@ -24,7 +24,7 @@ export const ProviderOrders = () => {
     };
 
     fetchData();
-  }, [actions]);
+  }, []);
 
   useEffect(() => {
     if (store.orders && store.orders.length > 0) {
@@ -40,12 +40,12 @@ export const ProviderOrders = () => {
           customerCompanyName: customer ? customer.company_name : "Desconocido",
           customerContactName: customer ? customer.contact_name : "Desconocido",
           providerPhone: provider ? provider.phone : "Desconocido",
-          providerCompanyName: provider ? provider.company_name : "Pendiente de asignar",
+          providerCompanyName: store.provider ? store.provider.company_name : "Pendiente de asignar",
           providerContactName: provider ? provider.contact_name : "Pendiente de asignar",
           model: vehicle ? vehicle.model : "Desconocido",
           brand: vehicle ? vehicle.brand : "Desconocido",
-          origin: originLocation ? originLocation.city : "Desconocido",
-          destination: destinationLocation ? destinationLocation.city : "Desconocido",
+          origin: order.origin_city ? order.origin_city : "Desconocido",
+          destination: order.destiny_city ? order.destiny_city : "Desconocido",
         };
       });
 
@@ -70,7 +70,6 @@ export const ProviderOrders = () => {
               <thead>
                 <tr>
                   <th scope="col">Proveedor</th>
-                  <th scope="col">Cliente</th>
                   <th scope="col">Fecha de pedido</th>
                   <th scope="col">Fecha estimada de entrega</th>
                   <th scope="col">Origen</th>
@@ -86,7 +85,6 @@ export const ProviderOrders = () => {
                 {ordersData.map((order) => (
                   <tr key={order.id} className="table-light">
                     <td>{order.providerCompanyName}</td>
-                    <td>{order.customerCompanyName}</td>
                     <td>{order.order_created_date}</td>
                     <td>{order.estimated_date_end}</td>
                     <td>{order.origin}</td>
