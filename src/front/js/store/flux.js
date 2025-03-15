@@ -342,7 +342,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					const data = await response.json();
 					console.log("✅ Cliente obtenido:", data.results);
 
-					setStore({ currentCustomer: data.results }); // ✅ Guardar cliente en el store
+					setStore({ customer: data.results }); // ✅ Guardar cliente en el store
 				} catch (error) {
 					console.error("❌ Error en getCustomerById:", error);
 				}
@@ -484,7 +484,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 
 					const data = await response.json();
-					setStore({ currentProvider: data.results });
+					setStore({ provider: data.results });
 				} catch (error) {
 					console.error("❌ Error en getProviderById:", error);
 				}
@@ -763,6 +763,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 			addOrder: async (dataToSend) => {
 				const uri = `${process.env.BACKEND_URL}/api/orders`;
 				const token = localStorage.getItem("token"); // ✅ Obtener el token
+				console.log(dataToSend)
 
 				if (!token) {
 					console.error("❌ No hay token disponible, no se puede crear la orden.");
@@ -812,7 +813,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 				}
 			
 				const options = {
-					method: "",
+					method: "PATCH",
 					headers: {
 						"Content-Type": "application/json",
 						"Authorization": `Bearer ${token}`
@@ -828,7 +829,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					}
 			
 					const data = await response.json();
-					console.log("✅ Proveedor asignado correctamente:", data);
+					toast.success("Pedido asignado correctamente");
 			
 					// 🔹 Asegurar que el store se actualiza con la orden modificada
 					const store = getStore();
