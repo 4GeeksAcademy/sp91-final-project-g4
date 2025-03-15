@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Context } from "../store/appContext";
 import { toast } from "react-toastify";
 
-export const OrderCustomerDetail = () => {
+export const CustomerOrderDetail = () => {
     const navigate = useNavigate();
     const { store, actions } = useContext(Context);
     const location = useLocation();
@@ -48,7 +48,7 @@ export const OrderCustomerDetail = () => {
             await actions.getOrders(); // ✅ Actualiza la lista de pedidos de clientes
             await actions.getProviderOrders(); // ✅ Asegura que la orden aparece en traslados de proveedores
             toast.success("Proveedor asignado correctamente.");
-            navigate("/admin/orders-customers"); // ✅ Redirigir a la lista de pedidos de clientes
+            navigate("/customer-orders"); // ✅ Redirigir a la lista de pedidos de clientes
         } else {
             toast.error("Error al asignar el proveedor.");
         }
@@ -65,7 +65,7 @@ export const OrderCustomerDetail = () => {
                 </div>
 
                 <div className="d-flex justify-content-between align-items-center mb-3">
-                    <button className="btn btn-primary" onClick={() => navigate("/admin/orders-customers")}>
+                    <button className="btn btn-primary" onClick={() => navigate("/customer-orders")}>
                         Volver a Pedidos de Cliente
                     </button>
                     <span className={`badge ${orderStatus === "Cancel" ? "bg-danger" : (orderStatus === "Order accepted" ? "bg-primary" : "bg-success")}`}>
@@ -143,30 +143,6 @@ export const OrderCustomerDetail = () => {
                                     Cancelar Pedido
                                 </button>
                             )}
-                        </div>
-
-                        <div className="card p-3">
-                            <h6>Asignar Traslado a Proveedor</h6>
-                            <select
-                                className="form-control"
-                                value={selectedProvider}
-                                onChange={(e) => setSelectedProvider(e.target.value)}
-                                disabled={isProviderAssigned || orderStatus === "Cancel"} 
-                            >
-                                <option value="">Seleccione un Proveedor</option>
-                                {store.providers.map(provider => (
-                                    <option key={provider.id} value={provider.id}>
-                                        {provider.company_name}
-                                    </option>
-                                ))}
-                            </select>
-                            <button 
-                                className="btn btn-primary mt-3 w-100" 
-                                onClick={handleAssignProvider}
-                                disabled={isProviderAssigned || orderStatus === "Cancel"}
-                            >
-                                Asignar Traslado
-                            </button>
                         </div>
                     </div>
                 </div>

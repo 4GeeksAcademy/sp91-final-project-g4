@@ -3,6 +3,7 @@ import getState from "./flux.js";
 import { jwtDecode } from "jwt-decode";
 
 
+
 // Don't change, here is where we initialize our context, by default it's just going to be null.
 export const Context = React.createContext(null);
 
@@ -22,7 +23,6 @@ const injectContext = PassedComponent => {
 					})
 			})
 		);
-
 		/*
 		  EDIT THIS!
 		  This function is the equivalent to "window.onLoad", it only runs once on the entire application lifetime
@@ -35,7 +35,7 @@ const injectContext = PassedComponent => {
 			const token = localStorage.getItem('token')
 			if (token){
 				const decodeToken = jwtDecode(token)
-				console.log(decodeToken.exp);
+				console.log(decodeToken);
 				const nowDate = new Date().getTime()/1000
 				const result = decodeToken.exp > Math.floor(nowDate)
 				console.log(result);
@@ -43,6 +43,8 @@ const injectContext = PassedComponent => {
 				if (result) {
 					state.actions.setIsLogged(true);
 					state.actions.getUser(decodeToken.user_id)
+					state.actions.getProviderById(decodeToken.provider_id);
+					state.actions.getCustomerById(decodeToken.customer_id);
 				}
 				else{
 					state.actions.setIsLogged(false);

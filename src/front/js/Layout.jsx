@@ -42,6 +42,8 @@ import { EditProfile } from "./pages/EditProfile.jsx";
 import { AddAdminModal } from "./pages/AddAdminModal.jsx";  // ✅ Importación correcta
 import { ToastContainer } from "react-toastify";
 import { EditProviderProfile } from "./pages/EditProviderProfile.jsx";
+import { ProviderOrderDetail } from "./pages/ProviderOrderDetail.jsx";
+import { CustomerOrderDetail } from "./pages/CustomerOrderDetail.jsx";
 
 // Create your first component
 const Layout = () => {
@@ -97,8 +99,10 @@ const Layout = () => {
                             <Route element={<ContactUs />} path="/contact-us" />
                             <Route element={<OrderCustomer />} path="/admin/orders-customers" />
                             <Route element={<OrderCustomerDetail />} path="/admin/order-customer-detail" />
+                            <Route element={<CustomerOrderDetail />} path="/customer-order-detail" />
                             <Route element={<OrderProvider />} path="/admin/orders-providers" />
                             <Route element={<OrderProviderDetail />} path="/admin/order-provider-detail" />
+                            <Route element={<ProviderOrderDetail />} path="/provider-order-detail" />
                             <Route element={<UserProfile />} path="/admin-profile" />
                             <Route element={<AddAdminModal show={true} onClose={() => navigate("/admin-profile")} />} path="/add-admin" />
                             <Route path="*" element={<h1>Not found!</h1>} />

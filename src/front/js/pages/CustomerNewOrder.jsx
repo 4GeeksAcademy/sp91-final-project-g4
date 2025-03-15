@@ -7,7 +7,8 @@ export const CustomerNewOrder = () => {
     const navigate = useNavigate();
 
   
-    const customerId = store.currentUser?.id;
+    const customerId = store.customer?.id;
+    
 
     const [originId, setOriginId] = useState("");
     const [destinyId, setDestinyId] = useState("");
@@ -19,11 +20,16 @@ export const CustomerNewOrder = () => {
     const [correctorCost, setCorrectorCost] = useState(null);
     const [finalCost, setFinalCost] = useState(null);
 
+    // 🔹 Nuevos campos agregados
+    const [originContact, setOriginContact] = useState("");
+    const [originPhone, setOriginPhone] = useState("");
+    const [destinyContact, setDestinyContact] = useState("");
+    const [destinyPhone, setDestinyPhone] = useState("");
    
     useEffect(() => {
         actions.getLocations();
         actions.getVehicles();
-    }, [actions]);
+    }, []);
 
    
     useEffect(() => {
@@ -31,7 +37,7 @@ export const CustomerNewOrder = () => {
             const selectedCustomer = store.customers.find(cust => cust.id == customerId);
             if (selectedCustomer) setBaseTariff(parseFloat(selectedCustomer.cust_base_tariff).toFixed(2));
         }
-    }, [customerId, store.customers]);
+    }, [customerId, store.currentCustomer]);
 
     
     useEffect(() => {
@@ -68,10 +74,15 @@ export const CustomerNewOrder = () => {
             vehicle_id: vehicleId,
             plate,
             estimated_date_end: estimatedDate,
+            origin_contact: originContact, // ✅ Nuevo campo
+            origin_phone: originPhone, // ✅ Nuevo campo
+            destiny_contact: destinyContact, // ✅ Nuevo campo
+            destiny_phone: destinyPhone, // ✅ Nuevo campo
         };
-
-        const success = await actions.addOrder(orderData);
-        if (success) navigate("/customer/orders"); // Redirigir a la página de pedidos del cliente
+        console.log(orderData)
+    
+    const success = await actions.addOrder(orderData);
+        if (success) navigate("/customer-orders");
     };
 
     return (
@@ -88,7 +99,7 @@ export const CustomerNewOrder = () => {
                         <input 
                             type="text" 
                             className="form-control" 
-                            value={store.currentCustomer?.company_name || "Cliente no encontrado"} 
+                            value={store.customer?.company_name || "Cliente no encontrado"} 
                             disabled 
                         />
                     </div>

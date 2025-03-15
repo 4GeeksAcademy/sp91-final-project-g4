@@ -107,8 +107,8 @@ export const EditCustomer = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {store.currentCustomer?.users && store.currentCustomer.users.length > 0 ? (
-                            store.currentCustomer.users.map(user => (
+                        {store.customer?.users && store.customer.users.length > 0 ? (
+                            store.customer.users.map(user => (
                                 <tr key={user.id} className="table-light">
                                     <td>{user.name} {user.last_name}</td>
                                     <td>{user.email}</td>

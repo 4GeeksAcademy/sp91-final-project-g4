@@ -7,73 +7,50 @@ export const CustomerOrders = () => {
     const { store, actions } = useContext(Context);
 
     // Aquí obtenemos el ID del cliente actual desde el store (asegúrate de que esté disponible)
-    const currentCustomerId = store.currentUser?.id; // Suponiendo que el cliente está guardado en store.currentUser
+    //const customerId = store.customer?.id; // Suponiendo que el cliente está guardado en store.currentUser
 
     const handleViewDetails = (order) => {
-        navigate("/admin/order-customer-detail", { state: { order } });
+        navigate("/customer-order-detail", { state: { order } });
     };
 
     const [ordersData, setOrdersData] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
-            await actions.getCustomers();
-            await actions.getProviders();
-            await actions.getOrders();
-            await actions.getVehicles();
-            await actions.getLocations();
-        };
+            try {
+              // Llamar al backend para obtener solo las órdenes del proveedor actual
+              await actions.getOrders(); // Asegúrate de que `actions.getOrders()` esté obteniendo las órdenes del proveedor logueado
+            } catch (error) {
+              console.error("Error fetching orders:", error);
+            }
+          };
 
         fetchData();
     }, []);
 
-    useEffect(() => {
-        if (
-            store.orders &&
-            store.orders.length > 0 &&
-            store.customers &&
-            store.customers.length > 0 &&
-            store.providers &&
-            store.providers.length > 0 &&
-            store.vehicles &&
-            store.vehicles.length > 0 &&
-            store.locations &&
-            store.locations.length > 0
-        ) {
-            // Filtramos los pedidos para que solo vea los del cliente actual
-            const filteredOrders = store.orders.filter(order => order.customer_id === currentCustomerId);
+  useEffect(() => {
+    if (store.orders && store.orders.length > 0) {
+      const combinedData = store.orders.map((order) => {
+        const customer = store.customers.find((customer) => customer.id === order.customer_id);
+        const provider = store.providers.find((provider) => provider.id === order.provider_id);
+        const vehicle = store.vehicles.find((vehicle) => vehicle.id === order.vehicle_id);
+        const originLocation = store.locations.find((location) => location.id === order.origin_id);
+        const destinationLocation = store.locations.find((location) => location.id === order.destiny_id);
+        console.log(store.customer)
+        return {
+          ...order,
+          customerCompanyName: store.customer ? store.customer.company_name : "Desconocido",
+          customerContactName: store.customer ? store.customer.contact_name : "Desconocido",
+          model: vehicle ? vehicle.model : "Desconocido",
+          brand: vehicle ? vehicle.brand : "Desconocido",
+          origin: order.origin_city ? order.origin_city : "Desconocido",
+          destination: order.destiny_city ? order.destiny_city : "Desconocido",
+        };
+      });
 
-            const combinedData = filteredOrders.map((order) => {
-                const customer = store.customers.find((customer) => customer.id === order.customer_id);
-                const provider = store.providers.find((provider) => provider.id === order.provider_id);
-                const vehicle = store.vehicles.find((vehicle) => vehicle.id === order.vehicle_id);
-                const originLocation = store.locations.find((location) => location.id === order.origin_id);
-                const destinationLocation = store.locations.find((location) => location.id === order.destiny_id);
-
-                return {
-                    ...order,
-                    customerCompanyName: customer ? customer.company_name : "Desconocido",
-                    customerContactName: customer ? customer.contact_name : "Desconocido",
-                    customerPhone: customer ? customer.phone : "Desconocido",
-                    providerPhone: provider ? provider.phone : "Desconocido",
-                    providerCompanyName: provider ? provider.company_name : "Pendiente de asignar",
-                    providerContactName: provider ? provider.contact_name : "Pendiente de asignar",
-                    customerContact: customer ? customer.contact_name : "Desconocido",
-                    providerContact: provider ? provider.contact_name : "Desconocido",
-                    model: vehicle ? vehicle.model : "Desconocido",
-                    brand: vehicle ? vehicle.brand : "Desconocido",
-                    origin: originLocation ? originLocation.city : "Desconocido",
-                    origin_zip: originLocation ? originLocation.postal_code : "Desconocido",
-                    destiny_zip: destinationLocation ? destinationLocation.postal_code : "Desconocido",
-                    destination: destinationLocation ? destinationLocation.city : "Desconocido",
-                    regionOrigin: originLocation ? originLocation.region : "Desconocido",
-                    regionDestiny: destinationLocation ? destinationLocation.region : "Desconocido",
-                };
-            });
-
-            setOrdersData(combinedData);
-        }
-    }, [store.orders, store.customers, store.providers, store.vehicles, store.locations, currentCustomerId]);
+      setOrdersData(combinedData);
+    }
+  }, [store.orders, store.customers, store.providers, store.vehicles, store.locations]);
 
     return (
         <div className="container-fluid p-0">
@@ -86,7 +63,7 @@ export const CustomerOrders = () => {
                     <div className="d-flex justify-content-between mx-3 ">
                         <h1 className="text-secondary my-4">Pedidos de clientes</h1>
                         {/* El botón de "Añadir pedido" solo se muestra a los administradores o usuarios con permisos especiales */}
-                        {store.currentUser?.role === "admin" && (
+                        {store.customer?.role === "admin" && (
                             <button
                                 type="button"
                                 className="btn btn-success my-4"
@@ -99,9 +76,8 @@ export const CustomerOrders = () => {
                         <table className="table table-info">
                             <thead>
                                 <tr>
-                                    <th scope="col">Fecha de pedido</th>
                                     <th scope="col">Cliente</th>
-                                    <th scope="col">Proveedor</th>
+                                    <th scope="col">Fecha Pedido</th>
                                     <th scope="col">Fecha estimada de entrega</th>
                                     <th scope="col">Origen</th>
                                     <th scope="col">Destino</th>
@@ -117,7 +93,6 @@ export const CustomerOrders = () => {
                                 {ordersData.map((order) => (
                                     <tr key={order.id} className="table-light">
                                         <td>{order.customerCompanyName}</td>
-                                        <td>{order.providerCompanyName}</td>
                                         <td>{order.order_created_date}</td>
                                         <td>{order.estimated_date_end}</td>
                                         <td>{order.origin}</td>
