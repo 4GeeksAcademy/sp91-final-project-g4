@@ -13,18 +13,6 @@ export const OrderProvider = () => {
     const [ordersData, setOrdersData] = useState([]);
 
     useEffect(() => {
-        const fetchData = async () => {
-            await actions.getCustomers();
-            await actions.getProviders();
-            await actions.getOrders();
-            await actions.getVehicles();
-            await actions.getLocations();
-        };
-
-        fetchData();
-    }, []);
-
-    useEffect(() => {
         if (
             store.orders &&
             store.orders.length > 0 &&
@@ -37,17 +25,24 @@ export const OrderProvider = () => {
             store.locations &&
             store.locations.length > 0
         ) {
-            const combinedData = store.orders.map((order) => {
-               // .filter(order => order.provider_id !== null) DESCOMENTAR CUANDO FUNCIONE
+            // 🔹 Verificar los pedidos que llegan al store
+            console.log("📦 Lista completa de órdenes en store.orders:", store.orders);
+    
+            // 🔹 Filtrar solo pedidos con proveedor asignado
+            const providerOrders = store.orders.filter(order => order.provider_id !== null);
+            console.log("📌 Pedidos de proveedores filtrados:", providerOrders);
+    
+            // 🔹 Transformar datos para la tabla
+            const combinedData = providerOrders.map((order) => {
                 const provider = store.providers.find((provider) => provider.id === order.provider_id);
                 const customer = store.customers.find((customer) => customer.id === order.customer_id);
                 const vehicle = store.vehicles.find((vehicle) => vehicle.id === order.vehicle_id);
                 const originLocation = store.locations.find((location) => location.id === order.origin_id);
                 const destinationLocation = store.locations.find((location) => location.id === order.destiny_id);
-
+    
                 let formattedStatus;
                 let statusClass;
-
+    
                 switch (order.status_order) {
                     case "Order created":
                         formattedStatus = "Pendiente de asignar";
@@ -57,6 +52,14 @@ export const OrderProvider = () => {
                         formattedStatus = "Orden asignada";
                         statusClass = "text-primary";
                         break;
+                    case "In transit":
+                        formattedStatus = "En tránsito";
+                        statusClass = "text-info";
+                        break;
+                    case "Delivered":
+                        formattedStatus = "Entregado";
+                        statusClass = "text-success";
+                        break;
                     case "Cancel":
                         formattedStatus = "Orden Cancelada";
                         statusClass = "text-danger";
@@ -65,7 +68,7 @@ export const OrderProvider = () => {
                         formattedStatus = order.status_order;
                         statusClass = "";
                 }
-
+    
                 return {
                     ...order,
                     orderCreatedDate: order.order_created_date
@@ -85,10 +88,14 @@ export const OrderProvider = () => {
                     statusClass: statusClass,
                 };
             });
-
+    
+            console.log("✅ Datos combinados para la tabla de proveedores:", combinedData);
+    
             setOrdersData(combinedData);
         }
     }, [store.orders, store.customers, store.providers, store.vehicles, store.locations]);
+    
+    
 
     return (
         <div className="container-fluid p-0">

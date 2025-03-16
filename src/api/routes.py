@@ -661,6 +661,7 @@ def orders():
         origin_id = data.get("origin_id")
         destination_id = data.get("destiny_id")
         vehicle_id = data.get("vehicle_id")
+        print(data)
 
         # 🔹 Validación de campos obligatorios
         if not origin_id or not destination_id or not vehicle_id:
